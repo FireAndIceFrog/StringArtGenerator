@@ -2,6 +2,7 @@ import numpy as np
 from PIL import Image, ImageDraw
 import math
 import cv2
+import os
 
 class AbstractGenerator:
     """Base class for creating string art.
@@ -9,20 +10,29 @@ class AbstractGenerator:
     This class handles image loading, canvas setup, and rendering.
     It's designed to be inherited by specific algorithm implementations.
     """
-    def __init__(self, image_path, num_nails=256, image_size=500, extract_subject=True, remove_shadows=True):
+    def __init__(self, image_path, num_nails=256, image_size=500, extract_subject=True, remove_shadows=True, preserve_eyes=True):
         self.num_nails = num_nails
         self.image_size = image_size
         self.path = []
+        self.preserve_eyes = preserve_eyes
 
         # 1. Load and prepare the image with improved preprocessing
         processed_image = self._load_and_preprocess_image(image_path, image_size, extract_subject, remove_shadows)
         self.target_image = processed_image
 
-        # 2. Create the residual image (error map)
+        # 2. Detect eyes if eye preservation is enabled
+        if self.preserve_eyes:
+            self.eye_regions = self._detect_eyes(self.target_image)
+            self.eye_protection_mask = self._create_eye_protection_mask()
+        else:
+            self.eye_regions = []
+            self.eye_protection_mask = np.ones((image_size, image_size), dtype=np.float32)
+
+        # 3. Create the residual image (error map)
         # We use a float dtype to allow for negative values during subtraction
         self.residual_image = 255.0 - self.target_image.astype(np.float32)
 
-        # 3. Set up canvas and nail coordinates
+        # 4. Set up canvas and nail coordinates
         self.center = (image_size // 2, image_size // 2)
         self.radius = image_size // 2 - 5 # Inset nails slightly
         self.nail_coords = self._calculate_nail_coords()
@@ -47,8 +57,11 @@ class AbstractGenerator:
         # Step 1: Preserve aspect ratio - no stretching!
         h, w = original_img.shape
         
-        # Create square white canvas
-        canvas = np.full((image_size, image_size), 255, dtype=np.uint8)
+        # Find the most common color in the original image to use as background
+        background_color = self._get_most_common_color(original_img)
+        
+        # Create square canvas with the most common color
+        canvas = np.full((image_size, image_size), background_color, dtype=np.uint8)
         
         # Calculate scaling to fit image in canvas while preserving aspect ratio
         scale = min(image_size / w, image_size / h)
@@ -58,7 +71,7 @@ class AbstractGenerator:
         # Resize image maintaining aspect ratio
         resized_img = cv2.resize(original_img, (new_w, new_h), interpolation=cv2.INTER_LANCZOS4)
         
-        # Center the image on white canvas
+        # Center the image on canvas with most common color background
         start_x = (image_size - new_w) // 2
         start_y = (image_size - new_h) // 2
         canvas[start_y:start_y + new_h, start_x:start_x + new_w] = resized_img
@@ -77,6 +90,27 @@ class AbstractGenerator:
         Image.fromarray(processed_img).save('string_art_input.png')
         
         return processed_img
+
+    def _get_most_common_color(self, img):
+        """
+        Find the most common color (pixel value) in the image.
+        
+        Args:
+            img: numpy array of grayscale image
+            
+        Returns:
+            int: The most frequently occurring pixel value
+        """
+        # Get unique values and their counts
+        unique_values, counts = np.unique(img, return_counts=True)
+        
+        # Find the value with the highest count
+        most_common_idx = np.argmax(counts)
+        most_common_color = unique_values[most_common_idx]
+        
+        print(f"Most common color in image: {most_common_color} (appears {counts[most_common_idx]} times)")
+        
+        return int(most_common_color)
 
     def _remove_shadows(self, img):
         """
@@ -161,6 +195,80 @@ class AbstractGenerator:
         else:
             # No contours found, return original image
             return img
+
+    def _detect_eyes(self, img):
+        """
+        Detect eyes in the image using OpenCV's Haar cascade classifiers.
+        
+        Args:
+            img: numpy array of grayscale image
+            
+        Returns:
+            list of tuples: [(x, y, w, h), ...] for each detected eye region
+        """
+        try:
+            # Try to load OpenCV's built-in eye cascade classifier
+            eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
+            
+            if eye_cascade.empty():
+                print("Warning: Could not load eye cascade classifier. Eyes will not be protected.")
+                return []
+            
+            # Detect eyes
+            eyes = eye_cascade.detectMultiScale(
+                img,
+                scaleFactor=1.1,
+                minNeighbors=5,
+                minSize=(20, 20),
+                maxSize=(100, 100)
+            )
+            
+            eye_regions = []
+            for (x, y, w, h) in eyes:
+                # Expand the eye region slightly for better protection
+                padding = max(10, min(w, h) // 4)
+                x_exp = max(0, x - padding)
+                y_exp = max(0, y - padding)
+                w_exp = min(self.image_size - x_exp, w + 2 * padding)
+                h_exp = min(self.image_size - y_exp, h + 2 * padding)
+                
+                eye_regions.append((x_exp, y_exp, w_exp, h_exp))
+            
+            print(f"Detected {len(eye_regions)} eye regions")
+            return eye_regions
+            
+        except Exception as e:
+            print(f"Warning: Eye detection failed: {e}. Eyes will not be protected.")
+            return []
+
+    def _create_eye_protection_mask(self):
+        """
+        Create a mask that reduces line placement probability in eye regions.
+        
+        Returns:
+            numpy array: Protection mask where 1.0 = normal, 0.0-0.5 = protected areas
+        """
+        mask = np.ones((self.image_size, self.image_size), dtype=np.float32)
+        
+        for (x, y, w, h) in self.eye_regions:
+            # Create a protection zone around each eye
+            # Center of eye gets strongest protection (0.1), fading outward
+            center_x, center_y = x + w // 2, y + h // 2
+            
+            # Create gradient protection - stronger in center, weaker at edges
+            for i in range(y, min(y + h, self.image_size)):
+                for j in range(x, min(x + w, self.image_size)):
+                    # Distance from center of eye
+                    dist_x = abs(j - center_x) / (w / 2)
+                    dist_y = abs(i - center_y) / (h / 2)
+                    dist = np.sqrt(dist_x**2 + dist_y**2)
+                    
+                    # Protection strength decreases with distance
+                    if dist <= 1.0:  # Inside the eye region
+                        protection = 0.1 + 0.4 * dist  # 0.1 at center, 0.5 at edge
+                        mask[i, j] = min(mask[i, j], protection)
+        
+        return mask
 
     def _calculate_nail_coords(self):
         """Calculates the (x, y) coordinates for each nail on a circle."""
