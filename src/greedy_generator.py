@@ -11,7 +11,7 @@ class GreedyGenerator(AbstractGenerator):
     At each step, it chooses the line that covers the most darkness
     in the current residual image.
     """
-    def generate_path(self, num_lines, line_darkness=25, min_improvement_score=10.0):
+    def generate_path(self, num_lines, line_darkness=25, min_improvement_score=10.0, save_every=20):
         """
         Generates the string path using a greedy algorithm.
 
@@ -27,7 +27,7 @@ class GreedyGenerator(AbstractGenerator):
         self.path = [current_nail]
 
         # Use tqdm for a progress bar
-        for _ in tqdm(range(num_lines), desc="Placing Strings"):
+        for iteration in tqdm(range(num_lines), desc="Placing Strings"):
             best_next_nail = -1
             max_score = -1
 
@@ -77,6 +77,10 @@ class GreedyGenerator(AbstractGenerator):
             # Move to the new nail and update the path
             current_nail = best_next_nail
             self.path.append(current_nail)
+
+            # Save progress every save_every iterations
+            if save_every > 0 and (iteration + 1) % save_every == 0:
+                self.save_progress()
         
         print(f"\nPath generation complete. Total lines: {len(self.path) - 1}")
         return self.path

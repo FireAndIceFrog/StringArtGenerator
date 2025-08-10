@@ -15,16 +15,16 @@ if __name__ == '__main__':
 
         create_outline_image('portrait.jpg', 'portrait_outline.jpg', 
                            low_threshold=25, high_threshold=50,
-                           max_blur_kernel=55, min_blur_kernel=11, 
+                           max_blur_kernel=33, min_blur_kernel=3, 
                            use_gradient_blur=True)
 
         # 1. Initialize the generator with your image
         # You can find good public domain portraits on sites like unsplash.com
-        generator = GreedyGenerator(image_path='portrait_outline.jpg', num_nails=720, image_size=500)
+        generator = GreedyGenerator(image_path='portrait.jpg', num_nails=720, image_size=1000, extract_subject=True, remove_shadows=False)
 
         # 2. Generate the path (the sequence of nails)
         # More lines = more detail, but longer processing time
-        generator.generate_path(num_lines=1000, line_darkness=30)
+        generator.generate_path(num_lines=2000, line_darkness=50, min_improvement_score=1.0)
 
         # 3. Render the final image from the path
         generator.render_image(output_path='string_art_output.png')
