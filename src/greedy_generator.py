@@ -41,10 +41,16 @@ class GreedyGenerator(AbstractGenerator):
                 end_coord = self.nail_coords[next_nail]
                 rr, cc = get_line_pixels(start_coord[1], start_coord[0], end_coord[1], end_coord[0])
 
-                # Calculate the score (sum of darkness along the line)
+                # Calculate the score (average brightness along the line)
+                # This matches the Processing algorithm which uses average brightness of inverted image
                 # Ensure we don't go out of bounds
                 valid_indices = (rr >= 0) & (rr < self.image_size) & (cc >= 0) & (cc < self.image_size)
-                score = self.residual_image[rr[valid_indices], cc[valid_indices]].sum()
+                
+                if np.sum(valid_indices) > 0:  # Make sure we have valid pixels
+                    # Use average brightness (matches Processing: sum[j] = round(sum[j]*1.0/d))
+                    score = self.residual_image[rr[valid_indices], cc[valid_indices]].mean()
+                else:
+                    score = 0
 
                 if score > max_score:
                     max_score = score

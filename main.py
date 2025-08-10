@@ -5,7 +5,7 @@ import math
 from tqdm import tqdm
 
 from src.create_outline_image import create_outline_image
-from src.contour_generator import ContourGenerator # For a nice progress bar
+from src.greedy_generator import GreedyGenerator # Original algorithm implementation
 
 # --- EXAMPLE USAGE ---
 if __name__ == '__main__':
@@ -20,7 +20,7 @@ if __name__ == '__main__':
 
         # 1. Initialize the generator with your image
         # You can find good public domain portraits on sites like unsplash.com
-        generator = ContourGenerator(image_path='portrait_outline.jpg', num_nails=720, image_size=500)
+        generator = GreedyGenerator(image_path='portrait_outline.jpg', num_nails=720, image_size=500)
 
         # 2. Generate the path (the sequence of nails)
         # More lines = more detail, but longer processing time
