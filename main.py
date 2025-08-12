@@ -21,7 +21,7 @@ if __name__ == '__main__':
 
         # Example 1: Regular GreedyGenerator (draws facial features)
         print("=== Creating Regular String Art (facial features) ===")
-        generator = GreedyGenerator(image_path='portrait.jpg', num_nails=720, image_size=2000, extract_subject=True, remove_shadows=True)
+        generator = GreedyGenerator(image_path='portrait.jpg', num_nails=360*3, image_size=2000, extract_subject=True, remove_shadows=True)
 
         # 2. Generate the path (the sequence of nails)
         # More lines = more detail, but longer processing time
