@@ -1,0 +1,31 @@
+[package]
+name = "string_art_rust_impl"
+version = "0.1.0"
+edition = "2021"
+authors = ["Your Name <your.email@example.com>"]
+description = "Rust implementation of greedy algorithm for automated string art generation"
+license = "MIT"
+
+[[bin]]
+name = "string_art"
+path = "src/main.rs"
+
+[dependencies]
+image = "0.24"
+ndarray = "0.15"
+indicatif = "0.17"
+rayon = "1.7"
+thiserror = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+opencv = { version = "0.91", default-features = false, features = ["imgproc", "objdetect"], optional = true }
+num-traits = "0.2"
+clap = { version = "4.4", features = ["derive"] }
+
+[features]
+default = ["opencv-support"]
+opencv-support = ["opencv"]
+
+[dev-dependencies]
+tempfile = "3.8"
+criterion = "0.5"
