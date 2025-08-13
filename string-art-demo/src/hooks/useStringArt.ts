@@ -25,6 +25,7 @@ interface ProgressInfo {
   score: number;
   completion_percent: number;
   path_segment: [number, number];
+  current_path: number[]; // Added current_path to match the updated callback
 }
 
 interface WasmModule {
@@ -132,12 +133,21 @@ export const useStringArt = (): UseStringArtReturn => {
           onNailCoords(scaledNailCoords);
         }
         
-        const path = await generator.generate_path_streaming(
+        console.log('🎯 JS: Starting string art generation...');
+        
+        const path = await generator.generate_path_streaming_with_frequency(
           1000, // max_lines
           25.0, // line_darkness
           10.0, // min_improvement_score
-          onProgress
+          10, // progress_frequency (fixed: was 10.0, now 10 - integer!)
+          (progress: ProgressInfo) => {
+            console.log('🎉 JS CALLBACK RECEIVED:', progress);
+            console.log('📜 Current Path:', progress.current_path);
+            onProgress(progress);
+          }
         );
+        
+        console.log('✅ JS: String art generation completed!');
         
         return { path, nailCoords: scaledNailCoords };
       } catch (err) {

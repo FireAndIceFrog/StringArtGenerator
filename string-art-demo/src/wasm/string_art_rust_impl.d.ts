@@ -18,11 +18,9 @@ export class ProgressInfo {
   free(): void;
   lines_completed: number;
   total_lines: number;
-  current_nail: number;
-  next_nail: number;
+  current_path: Uint32Array;
   score: number;
   completion_percent: number;
-  readonly path_segment: Array<any>;
 }
 /**
  * Main WASM interface for string art generation
@@ -86,6 +84,10 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 export interface InitOutput {
   readonly memory: WebAssembly.Memory;
   readonly __wbg_wasmstringartconfig_free: (a: number, b: number) => void;
+  readonly __wbg_get_wasmstringartconfig_num_nails: (a: number) => number;
+  readonly __wbg_set_wasmstringartconfig_num_nails: (a: number, b: number) => void;
+  readonly __wbg_get_wasmstringartconfig_image_size: (a: number) => number;
+  readonly __wbg_set_wasmstringartconfig_image_size: (a: number, b: number) => void;
   readonly __wbg_get_wasmstringartconfig_extract_subject: (a: number) => number;
   readonly __wbg_set_wasmstringartconfig_extract_subject: (a: number, b: number) => void;
   readonly __wbg_get_wasmstringartconfig_remove_shadows: (a: number) => number;
@@ -107,15 +109,12 @@ export interface InitOutput {
   readonly __wbg_set_progressinfo_lines_completed: (a: number, b: number) => void;
   readonly __wbg_get_progressinfo_total_lines: (a: number) => number;
   readonly __wbg_set_progressinfo_total_lines: (a: number, b: number) => void;
-  readonly __wbg_get_progressinfo_current_nail: (a: number) => number;
-  readonly __wbg_set_progressinfo_current_nail: (a: number, b: number) => void;
-  readonly __wbg_get_progressinfo_next_nail: (a: number) => number;
-  readonly __wbg_set_progressinfo_next_nail: (a: number, b: number) => void;
+  readonly __wbg_get_progressinfo_current_path: (a: number) => [number, number];
+  readonly __wbg_set_progressinfo_current_path: (a: number, b: number, c: number) => void;
   readonly __wbg_get_progressinfo_score: (a: number) => number;
   readonly __wbg_set_progressinfo_score: (a: number, b: number) => void;
   readonly __wbg_get_progressinfo_completion_percent: (a: number) => number;
   readonly __wbg_set_progressinfo_completion_percent: (a: number, b: number) => void;
-  readonly progressinfo_path_segment: (a: number) => any;
   readonly __wbg_stringartwasm_free: (a: number, b: number) => void;
   readonly stringartwasm_new: (a: any, b: number) => [number, number, number];
   readonly stringartwasm_get_nail_coordinates: (a: number) => any;
@@ -128,11 +127,7 @@ export interface InitOutput {
   readonly log_to_console: (a: number, b: number) => void;
   readonly get_version: () => [number, number];
   readonly test_wasm: () => [number, number];
-  readonly __wbg_get_wasmstringartconfig_num_nails: (a: number) => number;
-  readonly __wbg_get_wasmstringartconfig_image_size: (a: number) => number;
   readonly main: () => void;
-  readonly __wbg_set_wasmstringartconfig_num_nails: (a: number, b: number) => void;
-  readonly __wbg_set_wasmstringartconfig_image_size: (a: number, b: number) => void;
   readonly __wbindgen_exn_store: (a: number) => void;
   readonly __externref_table_alloc: () => number;
   readonly __wbindgen_export_2: WebAssembly.Table;
@@ -141,8 +136,8 @@ export interface InitOutput {
   readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
   readonly __wbindgen_export_6: WebAssembly.Table;
   readonly __externref_table_dealloc: (a: number) => void;
-  readonly closure79_externref_shim: (a: number, b: number, c: any) => void;
-  readonly closure96_externref_shim: (a: number, b: number, c: any, d: any) => void;
+  readonly closure80_externref_shim: (a: number, b: number, c: any) => void;
+  readonly closure97_externref_shim: (a: number, b: number, c: any, d: any) => void;
   readonly __wbindgen_start: () => void;
 }
 

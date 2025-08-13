@@ -93,33 +93,9 @@ impl StringArtGenerator for GreedyGenerator {
         num_lines: usize,
         line_darkness: f32,
         min_improvement_score: f32,
-        save_every: usize,
+        _save_every: usize,
     ) -> Result<Vec<usize>> {
-        println!("Starting greedy path generation...");
-        println!("Parameters:");
-        println!("  - Max lines: {}", num_lines);
-        println!("  - Line darkness: {}", line_darkness);
-        println!("  - Min improvement score: {}", min_improvement_score);
-        println!("  - Save every: {} iterations", save_every);
-
-        // Validate parameters
-        if num_lines == 0 {
-            return Err(StringArtError::InvalidParameter {
-                message: "num_lines must be greater than 0".to_string(),
-            });
-        }
-
-        if line_darkness <= 0.0 {
-            return Err(StringArtError::InvalidParameter {
-                message: "line_darkness must be positive".to_string(),
-            });
-        }
-
-        // Start at nail 0
-        let mut current_nail = 0;
-        self.base.path = vec![current_nail];
-
-        // Create progress bar
+        // Use the callback method with a progress bar for CLI usage
         let progress_bar = ProgressBar::new(num_lines as u64);
         progress_bar.set_style(
             ProgressStyle::default_bar()
@@ -128,82 +104,24 @@ impl StringArtGenerator for GreedyGenerator {
                 .progress_chars("##-"),
         );
 
-        let mut consecutive_failures = 0;
-        let max_consecutive_failures = 100; // Stop if no improvement for 100 iterations
-
-        for iteration in 0..num_lines {
-            progress_bar.set_message(format!("Placing string {}", iteration + 1));
-
-            // Find the best next nail
-            match self.find_best_next_nail(current_nail, min_improvement_score) {
-                Some((best_next_nail, max_score)) => {
-                    // Reset failure counter
-                    consecutive_failures = 0;
-
-                    // Apply the line darkness to the residual image
-                    let start = self.base.nail_coords[current_nail];
-                    let end = self.base.nail_coords[best_next_nail];
-                    
-                    apply_line_darkness(
-                        &mut self.base.residual_image,
-                        start,
-                        end,
-                        line_darkness,
-                    );
-
-                    // Update current position and path
-                    current_nail = best_next_nail;
-                    self.base.path.push(current_nail);
-
-                    // Update progress bar with score information
-                    progress_bar.set_message(format!(
-                        "String {}: nail {} -> {} (score: {:.2})",
-                        iteration + 1,
-                        self.base.path[self.base.path.len() - 2],
-                        current_nail,
-                        max_score
-                    ));
-                }
-                None => {
-                    consecutive_failures += 1;
-                    progress_bar.set_message(format!(
-                        "String {}: No improvement found (failures: {})",
-                        iteration + 1,
-                        consecutive_failures
-                    ));
-
-                    if consecutive_failures >= max_consecutive_failures {
-                        progress_bar.finish_with_message(format!(
-                            "Stopped early: No improvement for {} consecutive iterations",
-                            consecutive_failures
-                        ));
-                        break;
-                    }
-                }
+        let result = self.generate_path_with_callback(
+            num_lines,
+            line_darkness, 
+            min_improvement_score,
+            1, // Progress frequency: every iteration for CLI
+            |lines_completed, _total_lines, current_path, score| {
+                progress_bar.set_message(format!(
+                    "String {}: path {:?} (score: {:.2})",
+                    lines_completed,
+                    current_path,
+                    score
+                ));
+                progress_bar.set_position(lines_completed as u64);
             }
-
-            // Save progress periodically
-            if save_every > 0 && (iteration + 1) % save_every == 0 {
-                if let Err(e) = self.save_progress("string_art_progress") {
-                    eprintln!("Warning: Failed to save progress: {}", e);
-                }
-            }
-
-            progress_bar.inc(1);
-        }
+        );
 
         progress_bar.finish_with_message("Path generation complete");
-
-        let total_lines = self.base.path.len().saturating_sub(1);
-        println!("Path generation complete. Total lines: {}", total_lines);
-
-        if total_lines == 0 {
-            return Err(StringArtError::PathGenerationFailed {
-                reason: "No valid lines could be generated".to_string(),
-            });
-        }
-
-        Ok(self.base.path.clone())
+        result
     }
 
     fn generate_path_with_callback<F>(
@@ -215,7 +133,7 @@ impl StringArtGenerator for GreedyGenerator {
         mut callback: F,
     ) -> Result<Vec<usize>>
     where
-        F: FnMut(usize, usize, usize, usize, f32), // lines_completed, total, current_nail, next_nail, score
+        F: FnMut(usize, usize, &[usize], f32), // lines_completed, total, current_nail, next_nail, score
     {
         println!("Starting greedy path generation with streaming...");
         println!("Parameters:");
@@ -245,6 +163,9 @@ impl StringArtGenerator for GreedyGenerator {
         let max_consecutive_failures = 100;
 
         for iteration in 0..num_lines {
+            println!("Iteration {}: progress_frequency={}, should_callback={}", 
+                iteration, progress_frequency, iteration % progress_frequency == 0);
+
             // Find the best next nail
             match self.find_best_next_nail(current_nail, min_improvement_score) {
                 Some((best_next_nail, max_score)) => {
@@ -269,17 +190,22 @@ impl StringArtGenerator for GreedyGenerator {
                     // Call progress callback every N iterations
                     if iteration % progress_frequency == 0 || iteration == num_lines - 1 {
                         let lines_completed = iteration + 1;
+                        println!("🚀 CALLING CALLBACK: iteration={}, lines_completed={}, current_nail={}, next_nail={}, score={:.2}", 
+                            iteration, lines_completed, self.base.path[self.base.path.len() - 2], current_nail, max_score);
                         callback(
                             lines_completed,
                             num_lines,
-                            self.base.path[self.base.path.len() - 2], // current_nail (previous)
-                            current_nail, // next_nail (current)
+                            &self.base.path, // Pass the full path
                             max_score,
                         );
+                        println!("✅ CALLBACK COMPLETED");
+                    } else {
+                        println!("⏭️  Skipping callback for iteration {}", iteration);
                     }
                 }
                 None => {
                     consecutive_failures += 1;
+                    println!("❌ No improvement found for iteration {}", iteration);
 
                     if consecutive_failures >= max_consecutive_failures {
                         println!("Stopped early: No improvement for {} consecutive iterations", consecutive_failures);

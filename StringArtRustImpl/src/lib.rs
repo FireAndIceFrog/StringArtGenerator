@@ -63,8 +63,9 @@ pub mod utils;
 pub mod wasm;
 
 // Re-export main types for easier use
-pub use greedy_generator::{GreedyGenerator, StringArtConfig, StringArtGenerator};
+pub use abstract_generator::{AbstractStringArt, StringArtConfig, StringArtGenerator};
 pub use error::{Result, StringArtError};
+pub use greedy_generator::GreedyGenerator;
 pub use image_processing::EyeRegion;
 pub use utils::Coord;
 

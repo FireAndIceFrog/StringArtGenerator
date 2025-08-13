@@ -197,8 +197,8 @@ const {
 interface ProgressInfo {
   lines_completed: number;     // Number of lines completed
   total_lines: number;         // Total number of lines to generate
-  current_nail: number;        // Current nail index
-  next_nail: number;           // Next nail index
+
+   pub current_path: number[], //All completed lines till now
   score: number;               // Current improvement score
   completion_percent: number;  // Completion percentage (0-100)
   path_segment: [number, number]; // Current path segment

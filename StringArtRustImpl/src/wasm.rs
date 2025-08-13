@@ -3,7 +3,8 @@
 //! This module provides JavaScript-friendly interfaces for the string art
 //! generation algorithms, enabling real-time streaming of results to web applications.
 
-use crate::greedy_generator::{GreedyGenerator, StringArtConfig, StringArtGenerator};
+use crate::abstract_generator::{StringArtConfig, StringArtGenerator};
+use crate::greedy_generator::GreedyGenerator;
 use crate::utils::Coord;
 use crate::error::StringArtError;
 use serde::{Deserialize, Serialize};
@@ -116,21 +117,9 @@ impl From<WasmStringArtConfig> for StringArtConfig {
 pub struct ProgressInfo {
     pub lines_completed: usize,
     pub total_lines: usize,
-    pub current_nail: usize,
-    pub next_nail: usize,
+    pub current_path: Vec<usize>,
     pub score: f32,
     pub completion_percent: f32,
-}
-
-#[wasm_bindgen]
-impl ProgressInfo {
-    #[wasm_bindgen(getter)]
-    pub fn path_segment(&self) -> Array {
-        let segment = Array::new();
-        segment.push(&JsValue::from(self.current_nail));
-        segment.push(&JsValue::from(self.next_nail));
-        segment
-    }
 }
 
 /// Main WASM interface for string art generation
@@ -288,25 +277,36 @@ impl StringArtWasm {
         console::log_1(&"Starting real-time streaming generation...".into());
         
         // Use the new streaming method with real-time callbacks
+        console::log_1(&format!("🔧 WASM: Starting generation with progress_frequency={}", progress_frequency).into());
+        
         let path = generator.generate_path_with_callback(
             max_lines,
             line_darkness,
             min_improvement_score,
             progress_frequency,
-            |lines_completed, total_lines, current_nail, next_nail, score| {
-                // Create progress info
-                let progress = ProgressInfo {
-                    lines_completed,
-                    total_lines,
-                    current_nail,
-                    next_nail,
-                    score,
-                    completion_percent: (lines_completed as f32 / total_lines as f32) * 100.0,
-                };
+                    |lines_completed, total_lines, current_path, score| {
+                        console::log_1(&format!("📡 WASM CALLBACK: lines_completed={}, total_lines={}, current_path_length={}, score={:.2}", 
+                            lines_completed, total_lines, current_path.len(), score).into());
+
+                        // Create progress info
+                        let progress = ProgressInfo {
+                            lines_completed,
+                            total_lines,
+                            current_path: current_path.to_vec(),
+                            score,
+                            completion_percent: (lines_completed as f32 / total_lines as f32) * 100.0,
+                        };
+
+                console::log_1(&format!("🌊 WASM: Sending progress to JS: {:.1}% complete", progress.completion_percent).into());
 
                 // Serialize and send to JavaScript
                 if let Ok(progress_js) = serde_wasm_bindgen::to_value(&progress) {
-                    let _ = progress_callback.call1(&JsValue::NULL, &progress_js);
+                    match progress_callback.call1(&JsValue::NULL, &progress_js) {
+                        Ok(_) => console::log_1(&"✅ WASM: JavaScript callback completed successfully".into()),
+                        Err(e) => console::log_1(&format!("❌ WASM: JavaScript callback failed: {:?}", e).into()),
+                    }
+                } else {
+                    console::log_1(&"❌ WASM: Failed to serialize progress data".into());
                 }
             },
         )?;

@@ -133,8 +133,94 @@ function makeMutClosure(arg0, arg1, dtor, f) {
     return real;
 }
 
+function debugString(val) {
+    // primitive types
+    const type = typeof val;
+    if (type == 'number' || type == 'boolean' || val == null) {
+        return  `${val}`;
+    }
+    if (type == 'string') {
+        return `"${val}"`;
+    }
+    if (type == 'symbol') {
+        const description = val.description;
+        if (description == null) {
+            return 'Symbol';
+        } else {
+            return `Symbol(${description})`;
+        }
+    }
+    if (type == 'function') {
+        const name = val.name;
+        if (typeof name == 'string' && name.length > 0) {
+            return `Function(${name})`;
+        } else {
+            return 'Function';
+        }
+    }
+    // objects
+    if (Array.isArray(val)) {
+        const length = val.length;
+        let debug = '[';
+        if (length > 0) {
+            debug += debugString(val[0]);
+        }
+        for(let i = 1; i < length; i++) {
+            debug += ', ' + debugString(val[i]);
+        }
+        debug += ']';
+        return debug;
+    }
+    // Test for built-in
+    const builtInMatches = /\[object ([^\]]+)\]/.exec(toString.call(val));
+    let className;
+    if (builtInMatches && builtInMatches.length > 1) {
+        className = builtInMatches[1];
+    } else {
+        // Failed to match the standard '[object ClassName]'
+        return toString.call(val);
+    }
+    if (className == 'Object') {
+        // we're a user defined class or Object
+        // JSON.stringify avoids problems with cycles, and is generally much
+        // easier than looping through ownProperties of `val`.
+        try {
+            return 'Object(' + JSON.stringify(val) + ')';
+        } catch (_) {
+            return 'Object';
+        }
+    }
+    // errors
+    if (val instanceof Error) {
+        return `${val.name}: ${val.message}\n${val.stack}`;
+    }
+    // TODO we could test for more things here, like `Set`s and `Map`s.
+    return className;
+}
+
 export function main() {
     wasm.main();
+}
+
+let cachedUint32ArrayMemory0 = null;
+
+function getUint32ArrayMemory0() {
+    if (cachedUint32ArrayMemory0 === null || cachedUint32ArrayMemory0.byteLength === 0) {
+        cachedUint32ArrayMemory0 = new Uint32Array(wasm.memory.buffer);
+    }
+    return cachedUint32ArrayMemory0;
+}
+
+function getArrayU32FromWasm0(ptr, len) {
+    ptr = ptr >>> 0;
+    return getUint32ArrayMemory0().subarray(ptr / 4, ptr / 4 + len);
+}
+
+function passArray32ToWasm0(arg, malloc) {
+    const ptr = malloc(arg.length * 4, 4) >>> 0;
+    getUint32ArrayMemory0().set(arg, ptr / 4);
+    WASM_VECTOR_LEN = arg.length;
+    return ptr;
 }
 
 function _assertClass(instance, klass) {
@@ -191,12 +277,12 @@ export function test_wasm() {
     }
 }
 
-function __wbg_adapter_26(arg0, arg1, arg2) {
-    wasm.closure79_externref_shim(arg0, arg1, arg2);
+function __wbg_adapter_28(arg0, arg1, arg2) {
+    wasm.closure80_externref_shim(arg0, arg1, arg2);
 }
 
-function __wbg_adapter_98(arg0, arg1, arg2, arg3) {
-    wasm.closure96_externref_shim(arg0, arg1, arg2, arg3);
+function __wbg_adapter_99(arg0, arg1, arg2, arg3) {
+    wasm.closure97_externref_shim(arg0, arg1, arg2, arg3);
 }
 
 const ProgressInfoFinalization = (typeof FinalizationRegistry === 'undefined')
@@ -245,30 +331,21 @@ export class ProgressInfo {
         wasm.__wbg_set_progressinfo_total_lines(this.__wbg_ptr, arg0);
     }
     /**
-     * @returns {number}
+     * @returns {Uint32Array}
      */
-    get current_nail() {
-        const ret = wasm.__wbg_get_progressinfo_current_nail(this.__wbg_ptr);
-        return ret >>> 0;
+    get current_path() {
+        const ret = wasm.__wbg_get_progressinfo_current_path(this.__wbg_ptr);
+        var v1 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v1;
     }
     /**
-     * @param {number} arg0
+     * @param {Uint32Array} arg0
      */
-    set current_nail(arg0) {
-        wasm.__wbg_set_progressinfo_current_nail(this.__wbg_ptr, arg0);
-    }
-    /**
-     * @returns {number}
-     */
-    get next_nail() {
-        const ret = wasm.__wbg_get_progressinfo_next_nail(this.__wbg_ptr);
-        return ret >>> 0;
-    }
-    /**
-     * @param {number} arg0
-     */
-    set next_nail(arg0) {
-        wasm.__wbg_set_progressinfo_next_nail(this.__wbg_ptr, arg0);
+    set current_path(arg0) {
+        const ptr0 = passArray32ToWasm0(arg0, wasm.__wbindgen_malloc);
+        const len0 = WASM_VECTOR_LEN;
+        wasm.__wbg_set_progressinfo_current_path(this.__wbg_ptr, ptr0, len0);
     }
     /**
      * @returns {number}
@@ -295,13 +372,6 @@ export class ProgressInfo {
      */
     set completion_percent(arg0) {
         wasm.__wbg_set_progressinfo_completion_percent(this.__wbg_ptr, arg0);
-    }
-    /**
-     * @returns {Array<any>}
-     */
-    get path_segment() {
-        const ret = wasm.progressinfo_path_segment(this.__wbg_ptr);
-        return ret;
     }
 }
 
@@ -441,27 +511,27 @@ export class WasmStringArtConfig {
      * @returns {number}
      */
     get num_nails() {
-        const ret = wasm.__wbg_get_progressinfo_lines_completed(this.__wbg_ptr);
+        const ret = wasm.__wbg_get_wasmstringartconfig_num_nails(this.__wbg_ptr);
         return ret >>> 0;
     }
     /**
      * @param {number} arg0
      */
     set num_nails(arg0) {
-        wasm.__wbg_set_progressinfo_lines_completed(this.__wbg_ptr, arg0);
+        wasm.__wbg_set_wasmstringartconfig_num_nails(this.__wbg_ptr, arg0);
     }
     /**
      * @returns {number}
      */
     get image_size() {
-        const ret = wasm.__wbg_get_progressinfo_total_lines(this.__wbg_ptr);
+        const ret = wasm.__wbg_get_wasmstringartconfig_image_size(this.__wbg_ptr);
         return ret >>> 0;
     }
     /**
      * @param {number} arg0
      */
     set image_size(arg0) {
-        wasm.__wbg_set_progressinfo_total_lines(this.__wbg_ptr, arg0);
+        wasm.__wbg_set_wasmstringartconfig_image_size(this.__wbg_ptr, arg0);
     }
     /**
      * @returns {boolean}
@@ -641,7 +711,7 @@ function __wbg_get_imports() {
                 const a = state0.a;
                 state0.a = 0;
                 try {
-                    return __wbg_adapter_98(a, state0.b, arg0, arg1);
+                    return __wbg_adapter_99(a, state0.b, arg0, arg1);
                 } finally {
                     state0.a = a;
                 }
@@ -691,6 +761,9 @@ function __wbg_get_imports() {
         const ret = Promise.resolve(arg0);
         return ret;
     };
+    imports.wbg.__wbg_set_37837023f3d740e8 = function(arg0, arg1, arg2) {
+        arg0[arg1 >>> 0] = arg2;
+    };
     imports.wbg.__wbg_set_3f1d0b984ed272ed = function(arg0, arg1, arg2) {
         arg0[arg1] = arg2;
     };
@@ -737,9 +810,16 @@ function __wbg_get_imports() {
         const ret = false;
         return ret;
     };
-    imports.wbg.__wbindgen_closure_wrapper279 = function(arg0, arg1, arg2) {
-        const ret = makeMutClosure(arg0, arg1, 80, __wbg_adapter_26);
+    imports.wbg.__wbindgen_closure_wrapper284 = function(arg0, arg1, arg2) {
+        const ret = makeMutClosure(arg0, arg1, 81, __wbg_adapter_28);
         return ret;
+    };
+    imports.wbg.__wbindgen_debug_string = function(arg0, arg1) {
+        const ret = debugString(arg1);
+        const ptr1 = passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len1 = WASM_VECTOR_LEN;
+        getDataViewMemory0().setInt32(arg0 + 4 * 1, len1, true);
+        getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
     };
     imports.wbg.__wbindgen_error_new = function(arg0, arg1) {
         const ret = new Error(getStringFromWasm0(arg0, arg1));
@@ -790,6 +870,7 @@ function __wbg_finalize_init(instance, module) {
     wasm = instance.exports;
     __wbg_init.__wbindgen_wasm_module = module;
     cachedDataViewMemory0 = null;
+    cachedUint32ArrayMemory0 = null;
     cachedUint8ArrayMemory0 = null;
 
 

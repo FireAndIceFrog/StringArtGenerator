@@ -57,7 +57,7 @@ pub trait StringArtGenerator {
         callback: F,
     ) -> Result<Vec<usize>>
     where
-        F: FnMut(usize, usize, usize, usize, f32); // lines_completed, total, current_nail, next_nail, score
+        F: FnMut(usize, usize, &[usize], f32); // lines_completed, total, current_path, score
 
     /// Get the current path
     fn get_path(&self) -> &[usize];
@@ -238,7 +238,7 @@ impl StringArtGenerator for AbstractStringArt {
         _callback: F,
     ) -> Result<Vec<usize>>
     where
-        F: FnMut(usize, usize, usize, usize, f32),
+        F: FnMut(usize, usize, &[usize], f32),
     {
         panic!("generate_path_with_callback must be implemented by specific generator types");
     }
