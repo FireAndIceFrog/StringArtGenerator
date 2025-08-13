@@ -59,6 +59,9 @@ pub mod greedy_generator;
 pub mod image_processing;
 pub mod utils;
 
+#[cfg(feature = "wasm")]
+pub mod wasm;
+
 // Re-export main types for easier use
 pub use abstract_generator::{AbstractStringArt, StringArtConfig, StringArtGenerator};
 pub use error::{Result, StringArtError};

@@ -20,6 +20,12 @@ pub enum StringArtError {
     
     #[error("No improvement found after {iterations} iterations")]
     NoImprovementFound { iterations: usize },
+    
+    #[error("Image processing error: {message}")]
+    ImageProcessingError { message: String },
+    
+    #[error("Serialization error: {message}")]
+    SerializationError { message: String },
 }
 
 pub type Result<T> = std::result::Result<T, StringArtError>;

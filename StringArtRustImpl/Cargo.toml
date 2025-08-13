@@ -6,6 +6,9 @@ authors = ["Your Name <your.email@example.com>"]
 description = "Rust implementation of greedy algorithm for automated string art generation"
 license = "MIT"
 
+[lib]
+crate-type = ["cdylib", "rlib"]
+
 [[bin]]
 name = "string_art"
 path = "src/main.rs"
@@ -22,9 +25,34 @@ opencv = { version = "0.91", default-features = false, features = ["imgproc", "o
 num-traits = "0.2"
 clap = { version = "4.4", features = ["derive"] }
 
+# WASM-specific dependencies
+wasm-bindgen = { version = "0.2", optional = true }
+wasm-bindgen-futures = { version = "0.4", optional = true }
+js-sys = { version = "0.3", optional = true }
+web-sys = { version = "0.3", features = [
+  "console",
+  "Performance",
+  "Window",
+], optional = true }
+console_error_panic_hook = { version = "0.1", optional = true }
+wee_alloc = { version = "0.4", optional = true }
+serde-wasm-bindgen = { version = "0.6", optional = true }
+
 [features]
 default = ["opencv-support"]
 opencv-support = ["opencv"]
+wasm = [
+  "wasm-bindgen",
+  "wasm-bindgen-futures", 
+  "js-sys",
+  "web-sys",
+  "console_error_panic_hook",
+  "wee_alloc",
+  "serde-wasm-bindgen"
+]
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = ["-Oz", "--enable-mutable-globals"]
 
 [dev-dependencies]
 tempfile = "3.8"

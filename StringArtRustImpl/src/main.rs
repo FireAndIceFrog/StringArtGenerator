@@ -43,7 +43,7 @@ fn main() {
                 .long("lines")
                 .value_name("NUMBER")
                 .help("Maximum number of lines to generate")
-                .default_value("5000"),
+                .default_value("3000"),
         )
         .arg(
             Arg::new("nails")
@@ -51,7 +51,7 @@ fn main() {
                 .long("nails")
                 .value_name("NUMBER")
                 .help("Number of nails around the circle")
-                .default_value("720"),
+                .default_value("1440"),
         )
         .arg(
             Arg::new("size")
@@ -59,7 +59,7 @@ fn main() {
                 .long("size")
                 .value_name("PIXELS")
                 .help("Canvas size (width and height)")
-                .default_value("500"),
+                .default_value("2000"),
         )
         .arg(
             Arg::new("darkness")
