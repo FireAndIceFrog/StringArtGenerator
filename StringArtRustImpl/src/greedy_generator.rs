@@ -10,6 +10,12 @@ pub struct GreedyGenerator {
 }
 
 impl GreedyGenerator {
+    /// Create a new greedy generator from image data in memory
+    pub fn from_image_data(image_data: &[u8], config: StringArtConfig) -> Result<Self> {
+        let base = AbstractStringArt::from_image_data(image_data, config)?;
+        Ok(Self { base })
+    }
+
     /// Create a new greedy generator
     pub fn new(image_path: &str, config: StringArtConfig) -> Result<Self> {
         let base = AbstractStringArt::new(image_path, config)?;

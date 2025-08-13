@@ -244,26 +244,8 @@ impl StringArtWasm {
         image_bytes: &[u8],
         config: &WasmStringArtConfig,
     ) -> std::result::Result<GreedyGenerator, StringArtError> {
-        // For now, we'll create a simple mock generator that works in WASM
-        // This would need to be a proper implementation that doesn't rely on file I/O
-        let img = image::load_from_memory(image_bytes)
-            .map_err(|e| StringArtError::ImageProcessingError {
-                message: format!("Failed to load image from memory: {}", e),
-            })?;
-
-        // Convert to grayscale for processing
-        let _gray_img = img.to_luma8();
-        
-        // For WASM compatibility, we'll create a generator with a dummy path
-        // The actual implementation would need to be refactored to work with image data directly
-        GreedyGenerator::new("dummy_path", config.clone().into())
-            .or_else(|_| {
-                // If the file-based generator fails, we'll need to create an in-memory version
-                // For now, return an error indicating we need to refactor the generator
-                Err(StringArtError::ImageProcessingError {
-                    message: "WASM mode requires in-memory image processing. Please use the mock implementation for now.".to_string(),
-                })
-            })
+        // Use the new memory-based constructor
+        GreedyGenerator::from_image_data(image_bytes, config.clone().into())
     }
 
     /// Generate path with streaming updates (async)

@@ -20,6 +20,19 @@ pub struct EyeRegion {
     pub height: i32,
 }
 
+/// Preprocesses image data from memory for string art generation
+pub fn preprocess_image_from_memory(
+    image_data: &[u8],
+    target_size: u32,
+    extract_subject: bool,
+    remove_shadows: bool,
+) -> Result<Array2<f32>> {
+    // Load image from memory and convert to grayscale
+    let img = image::load_from_memory(image_data)?.to_luma8();
+    
+    preprocess_image_internal(img, target_size, extract_subject, remove_shadows)
+}
+
 /// Loads and preprocesses an image for string art generation
 pub fn load_and_preprocess_image(
     image_path: &str,
@@ -29,6 +42,17 @@ pub fn load_and_preprocess_image(
 ) -> Result<Array2<f32>> {
     // Load image and convert to grayscale
     let img = image::open(image_path)?.to_luma8();
+    
+    preprocess_image_internal(img, target_size, extract_subject, remove_shadows)
+}
+
+/// Internal preprocessing logic shared by both file and memory-based functions
+fn preprocess_image_internal(
+    img: GrayImage,
+    target_size: u32,
+    extract_subject: bool,
+    remove_shadows: bool,
+) -> Result<Array2<f32>> {
     let (width, height) = img.dimensions();
     
     println!("Loaded image: {}x{}", width, height);
@@ -68,8 +92,12 @@ pub fn load_and_preprocess_image(
         processed = extract_subject_canny(&processed)?;
     }
     
-    // Save processed image for reference
-    processed.save("string_art_input.png")?;
+    // Save processed image for reference (skip in WASM)
+    if std::env::var("CARGO_CFG_TARGET_ARCH").unwrap_or_default() != "wasm32" {
+        if let Err(e) = processed.save("string_art_input.png") {
+            eprintln!("Warning: Could not save processed image: {}", e);
+        }
+    }
     
     // Convert to ndarray
     let array = image_to_array(&processed);

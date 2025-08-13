@@ -173,7 +173,7 @@ export const useStringArt = (): UseStringArtReturn => {
             static preset_fast() {
               const config = new MockWasmStringArtConfig();
               config.num_nails = 360;
-              config.image_size = 300;
+              config.image_size = 2000;
               config.extract_subject = false;
               config.remove_shadows = false;
               config.preserve_eyes = false;
@@ -187,7 +187,7 @@ export const useStringArt = (): UseStringArtReturn => {
             static preset_high_quality() {
               const config = new MockWasmStringArtConfig();
               config.num_nails = 1440;
-              config.image_size = 800;
+              config.image_size = 2000;
               return config;
             }
           } as any,

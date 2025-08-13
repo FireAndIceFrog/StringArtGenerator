@@ -79,6 +79,21 @@ pub struct AbstractStringArt {
 }
 
 impl AbstractStringArt {
+    /// Create a new string art generator from image data in memory
+    pub fn from_image_data(image_data: &[u8], config: StringArtConfig) -> Result<Self> {
+        println!("Initializing string art generator from memory...");
+        
+        // Load and preprocess the image from memory
+        let target_image = crate::image_processing::preprocess_image_from_memory(
+            image_data,
+            config.image_size as u32,
+            config.extract_subject,
+            config.remove_shadows,
+        )?;
+
+        Self::create_from_processed_image(target_image, config)
+    }
+
     /// Create a new string art generator
     pub fn new(image_path: &str, config: StringArtConfig) -> Result<Self> {
         println!("Initializing string art generator...");
@@ -90,6 +105,12 @@ impl AbstractStringArt {
             config.extract_subject,
             config.remove_shadows,
         )?;
+
+        Self::create_from_processed_image(target_image, config)
+    }
+
+    /// Internal helper to create from preprocessed image data
+    fn create_from_processed_image(target_image: Array2<f32>, config: StringArtConfig) -> Result<Self> {
 
         // Detect eyes if eye preservation is enabled
         let (eye_regions, eye_protection_mask) = if config.preserve_eyes {
