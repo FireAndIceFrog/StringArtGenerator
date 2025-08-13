@@ -16,6 +16,7 @@ export const __wbg_get_wasmstringartconfig_negative_space_threshold: (a: number)
 export const __wbg_set_wasmstringartconfig_negative_space_threshold: (a: number, b: number) => void;
 export const wasmstringartconfig_new: () => number;
 export const wasmstringartconfig_preset_fast: () => number;
+export const wasmstringartconfig_preset_balanced: () => number;
 export const wasmstringartconfig_preset_high_quality: () => number;
 export const __wbg_progressinfo_free: (a: number, b: number) => void;
 export const __wbg_get_progressinfo_lines_completed: (a: number) => number;
@@ -44,7 +45,6 @@ export const get_version: () => [number, number];
 export const test_wasm: () => [number, number];
 export const __wbg_get_wasmstringartconfig_num_nails: (a: number) => number;
 export const __wbg_get_wasmstringartconfig_image_size: (a: number) => number;
-export const wasmstringartconfig_preset_balanced: () => number;
 export const main: () => void;
 export const __wbg_set_wasmstringartconfig_num_nails: (a: number, b: number) => void;
 export const __wbg_set_wasmstringartconfig_image_size: (a: number, b: number) => void;

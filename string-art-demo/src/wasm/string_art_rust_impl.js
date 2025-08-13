@@ -545,7 +545,7 @@ export class WasmStringArtConfig {
      * @returns {WasmStringArtConfig}
      */
     static preset_balanced() {
-        const ret = wasm.wasmstringartconfig_new();
+        const ret = wasm.wasmstringartconfig_preset_balanced();
         return WasmStringArtConfig.__wrap(ret);
     }
     /**
@@ -743,7 +743,7 @@ function __wbg_get_imports() {
         const ret = false;
         return ret;
     };
-    imports.wbg.__wbindgen_closure_wrapper288 = function(arg0, arg1, arg2) {
+    imports.wbg.__wbindgen_closure_wrapper289 = function(arg0, arg1, arg2) {
         const ret = makeMutClosure(arg0, arg1, 85, __wbg_adapter_26);
         return ret;
     };

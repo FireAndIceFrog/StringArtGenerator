@@ -69,14 +69,23 @@ impl WasmStringArtConfig {
 
     #[wasm_bindgen]
     pub fn preset_balanced() -> WasmStringArtConfig {
-        WasmStringArtConfig::new()
+        WasmStringArtConfig {
+            num_nails: 720,
+            image_size: 2000,
+            extract_subject: true,
+            remove_shadows: true,
+            preserve_eyes: true,
+            preserve_negative_space: false,
+            negative_space_penalty: 0.5,
+            negative_space_threshold: 200.0,
+        }
     }
 
     #[wasm_bindgen]
     pub fn preset_high_quality() -> WasmStringArtConfig {
         WasmStringArtConfig {
             num_nails: 1440,
-            image_size: 800,
+            image_size: 2000,
             extract_subject: true,
             remove_shadows: true,
             preserve_eyes: true,

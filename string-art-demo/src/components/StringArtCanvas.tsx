@@ -27,7 +27,8 @@ export const StringArtCanvas: React.FC<StringArtCanvasProps> = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Clear canvas
+    // Always clear canvas first
+    ctx.clearRect(0, 0, width, height);
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, width, height);
 
@@ -35,6 +36,11 @@ export const StringArtCanvas: React.FC<StringArtCanvasProps> = ({
       // Show original image
       const img = new Image();
       img.onload = () => {
+        // Clear again before drawing image
+        ctx.clearRect(0, 0, width, height);
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, width, height);
+        
         const scale = Math.min(width / img.width, height / img.height);
         const scaledWidth = img.width * scale;
         const scaledHeight = img.height * scale;
@@ -44,35 +50,38 @@ export const StringArtCanvas: React.FC<StringArtCanvasProps> = ({
         ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
       };
       img.src = imageUrl;
-      return;
-    }
+    } else {
+      // Show string art
+      // Reset canvas state
+      ctx.globalCompositeOperation = 'source-over';
+      
+      // Draw nails as small circles
+      ctx.fillStyle = '#666';
+      nailCoords.forEach(([x, y]) => {
+        ctx.beginPath();
+        ctx.arc(x, y, 2, 0, 2 * Math.PI);
+        ctx.fill();
+      });
 
-    // Draw nails as small circles
-    ctx.fillStyle = '#666';
-    nailCoords.forEach(([x, y]) => {
-      ctx.beginPath();
-      ctx.arc(x, y, 2, 0, 2 * Math.PI);
-      ctx.fill();
-    });
+      // Draw string path
+      if (currentPath.length > 1) {
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.lineWidth = 0.5;
+        ctx.globalCompositeOperation = 'multiply';
 
-    // Draw string path
-    if (currentPath.length > 1) {
-      ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
-      ctx.lineWidth = 0.5;
-      ctx.globalCompositeOperation = 'multiply';
-
-      for (let i = 0; i < currentPath.length - 1; i++) {
-        const fromNail = currentPath[i];
-        const toNail = currentPath[i + 1];
-        
-        if (fromNail < nailCoords.length && toNail < nailCoords.length) {
-          const [x1, y1] = nailCoords[fromNail];
-          const [x2, y2] = nailCoords[toNail];
+        for (let i = 0; i < currentPath.length - 1; i++) {
+          const fromNail = currentPath[i];
+          const toNail = currentPath[i + 1];
           
-          ctx.beginPath();
-          ctx.moveTo(x1, y1);
-          ctx.lineTo(x2, y2);
-          ctx.stroke();
+          if (fromNail < nailCoords.length && toNail < nailCoords.length) {
+            const [x1, y1] = nailCoords[fromNail];
+            const [x2, y2] = nailCoords[toNail];
+            
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+          }
         }
       }
     }

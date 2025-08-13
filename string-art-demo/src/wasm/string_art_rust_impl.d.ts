@@ -96,6 +96,7 @@ export interface InitOutput {
   readonly __wbg_set_wasmstringartconfig_negative_space_threshold: (a: number, b: number) => void;
   readonly wasmstringartconfig_new: () => number;
   readonly wasmstringartconfig_preset_fast: () => number;
+  readonly wasmstringartconfig_preset_balanced: () => number;
   readonly wasmstringartconfig_preset_high_quality: () => number;
   readonly __wbg_progressinfo_free: (a: number, b: number) => void;
   readonly __wbg_get_progressinfo_lines_completed: (a: number) => number;
@@ -124,7 +125,6 @@ export interface InitOutput {
   readonly test_wasm: () => [number, number];
   readonly __wbg_get_wasmstringartconfig_num_nails: (a: number) => number;
   readonly __wbg_get_wasmstringartconfig_image_size: (a: number) => number;
-  readonly wasmstringartconfig_preset_balanced: () => number;
   readonly main: () => void;
   readonly __wbg_set_wasmstringartconfig_num_nails: (a: number, b: number) => void;
   readonly __wbg_set_wasmstringartconfig_image_size: (a: number, b: number) => void;

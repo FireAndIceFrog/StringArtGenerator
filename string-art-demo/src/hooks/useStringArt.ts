@@ -41,8 +41,9 @@ export interface UseStringArtReturn {
   generateStringArt: (
     imageData: Uint8Array,
     config: StringArtConfig,
-    onProgress: (progress: ProgressInfo) => void
-  ) => Promise<number[] | null>;
+    onProgress: (progress: ProgressInfo) => void,
+    onNailCoords?: (coords: Array<[number, number]>) => void
+  ) => Promise<{ path: number[] | null; nailCoords: Array<[number, number]> }>;
   presets: {
     fast: () => StringArtConfig;
     balanced: () => StringArtConfig;
@@ -61,148 +62,20 @@ export const useStringArt = (): UseStringArtReturn => {
         setIsLoading(true);
         setError(null);
 
-        // Try to load the real WASM module first
-        try {
-          // Initialize the WASM module
-          await init();
-          
-          // Create the real WASM interface
-          const realWasm: WasmModule = {
-            StringArtWasm,
-            WasmStringArtConfig,
-            test_wasm,
-            get_version,
-          };
-          
-          setWasmModule(realWasm);
-          console.log('Real WASM module loaded:', test_wasm());
-          return;
-        } catch (wasmError) {
-          console.warn('Real WASM module not available, using mock:', wasmError);
-        }
-
-        // Fallback to mock WASM module for testing
-        const mockWasm: WasmModule = {
-          StringArtWasm: class MockStringArtWasm {
-            constructor(imageData: Uint8Array, _config?: WasmStringArtConfig) {
-              console.log('Mock StringArt created with image data:', imageData.length, 'bytes');
-            }
-
-            free() {}
-
-            get_nail_coordinates(): any[] {
-              // Generate mock circular nail coordinates
-              const coords: any[] = [];
-              const centerX = 250;
-              const centerY = 250;
-              const radius = 240;
-              const numNails = 360;
-
-              for (let i = 0; i < numNails; i++) {
-                const angle = (i / numNails) * 2 * Math.PI;
-                const x = centerX + radius * Math.cos(angle);
-                const y = centerY + radius * Math.sin(angle);
-                coords.push([Math.round(x), Math.round(y)]);
-              }
-              return coords;
-            }
-
-            get_config(): WasmStringArtConfig {
-              return new WasmStringArtConfig();
-            }
-
-            async generate_path_streaming(
-              max_lines: number,
-              line_darkness: number,
-              min_improvement_score: number,
-              progress_callback: Function
-            ): Promise<any> {
-              const path: number[] = [0];
-              
-              // Simulate path generation with progress updates
-              for (let i = 0; i < max_lines; i++) {
-                // Simulate some processing time
-                await new Promise(resolve => setTimeout(resolve, 10));
-                
-                const nextNail = Math.floor(Math.random() * 360);
-                path.push(nextNail);
-                
-                const progress = {
-                  lines_completed: i + 1,
-                  total_lines: max_lines,
-                  current_nail: path[path.length - 2],
-                  next_nail: nextNail,
-                  score: Math.random() * 100,
-                  completion_percent: ((i + 1) / max_lines) * 100,
-                  path_segment: [path[path.length - 2], nextNail],
-                };
-                
-                progress_callback(progress);
-                
-                // Stop early sometimes to simulate real behavior
-                if (Math.random() < 0.001) break;
-              }
-              
-              return path;
-            }
-
-            get_current_path(): any[] {
-              return [];
-            }
-
-            get_nail_count(): number {
-              return 360;
-            }
-
-            get_image_size(): number {
-              return 500;
-            }
-          } as any,
-          
-          WasmStringArtConfig: class MockWasmStringArtConfig {
-            free() {}
-            num_nails = 720;
-            image_size = 500;
-            extract_subject = true;
-            remove_shadows = true;
-            preserve_eyes = true;
-            preserve_negative_space = false;
-            negative_space_penalty = 0.5;
-            negative_space_threshold = 200.0;
-
-            static preset_fast() {
-              const config = new MockWasmStringArtConfig();
-              config.num_nails = 360;
-              config.image_size = 2000;
-              config.extract_subject = false;
-              config.remove_shadows = false;
-              config.preserve_eyes = false;
-              return config;
-            }
-
-            static preset_balanced() {
-              return new MockWasmStringArtConfig();
-            }
-
-            static preset_high_quality() {
-              const config = new MockWasmStringArtConfig();
-              config.num_nails = 1440;
-              config.image_size = 2000;
-              return config;
-            }
-          } as any,
-          
-          test_wasm(): string {
-            return "Mock WASM module loaded successfully!";
-          },
-          
-          get_version(): string {
-            return "0.1.0-mock";
-          },
+        // Initialize the WASM module
+        await init();
+        
+        // Create the WASM interface
+        const wasmInterface: WasmModule = {
+          StringArtWasm,
+          WasmStringArtConfig,
+          test_wasm,
+          get_version,
         };
-
-        setWasmModule(mockWasm);
-        console.log('WASM module loaded:', mockWasm.test_wasm());
+        
+        setWasmModule(wasmInterface);
+        console.log('WASM module loaded successfully:', test_wasm());
+        
       } catch (err) {
         console.error('Failed to load WASM module:', err);
         setError(err instanceof Error ? err.message : 'Failed to load WASM module');
@@ -218,8 +91,9 @@ export const useStringArt = (): UseStringArtReturn => {
     async (
       imageData: Uint8Array,
       config: StringArtConfig,
-      onProgress: (progress: ProgressInfo) => void
-    ): Promise<number[] | null> => {
+      onProgress: (progress: ProgressInfo) => void,
+      onNailCoords?: (coords: Array<[number, number]>) => void
+    ): Promise<{ path: number[] | null; nailCoords: Array<[number, number]> }> => {
       if (!wasmModule) {
         throw new Error('WASM module not loaded');
       }
@@ -237,17 +111,39 @@ export const useStringArt = (): UseStringArtReturn => {
         wasmConfig.negative_space_threshold = config.negative_space_threshold;
 
         const generator = new wasmModule.StringArtWasm(imageData, wasmConfig);
+        
+        // Get nail coordinates from WASM and scale for display
+        const wasmNailCoords = generator.get_nail_coordinates();
+        const displaySize = 500; // Canvas display size
+        const wasmImageSize = config.image_size; // WASM processing size (2000px)
+        const scale = displaySize / wasmImageSize;
+        
+        const scaledNailCoords: Array<[number, number]> = [];
+        for (let i = 0; i < wasmNailCoords.length; i++) {
+          const coord = wasmNailCoords[i];
+          scaledNailCoords.push([
+            Math.round(coord[0] * scale),
+            Math.round(coord[1] * scale)
+          ]);
+        }
+        
+        // Notify about nail coordinates
+        if (onNailCoords) {
+          onNailCoords(scaledNailCoords);
+        }
+        
         const path = await generator.generate_path_streaming(
           1000, // max_lines
           25.0, // line_darkness
           10.0, // min_improvement_score
           onProgress
         );
-        return path;
+        
+        return { path, nailCoords: scaledNailCoords };
       } catch (err) {
         console.error('String art generation failed:', err);
         setError(err instanceof Error ? err.message : 'Generation failed');
-        return null;
+        return { path: null, nailCoords: [] };
       }
     },
     [wasmModule]

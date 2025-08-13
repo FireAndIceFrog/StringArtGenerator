@@ -19,21 +19,7 @@ function App() {
     setImageUrl(url);
     setCurrentPath([]);
     setProgress(null);
-
-    // Generate mock nail coordinates for the preview
-    const coords: Array<[number, number]> = [];
-    const centerX = 250;
-    const centerY = 250;
-    const radius = 240;
-    const numNails = 360;
-
-    for (let i = 0; i < numNails; i++) {
-      const angle = (i / numNails) * 2 * Math.PI;
-      const x = centerX + radius * Math.cos(angle);
-      const y = centerY + radius * Math.sin(angle);
-      coords.push([Math.round(x), Math.round(y)]);
-    }
-    setNailCoords(coords);
+    setNailCoords([]); // Clear until we generate the string art
   }, []);
 
   const handleStartGeneration = useCallback(async () => {
@@ -58,9 +44,16 @@ function App() {
         });
       };
 
-      const finalPath = await generateStringArt(imageData, config, onProgress);
-      if (finalPath) {
-        setCurrentPath(finalPath);
+      const onNailCoords = (coords: Array<[number, number]>) => {
+        setNailCoords(coords);
+      };
+
+      const result = await generateStringArt(imageData, config, onProgress, onNailCoords);
+      if (result.path) {
+        setCurrentPath(result.path);
+      }
+      if (result.nailCoords.length > 0) {
+        setNailCoords(result.nailCoords);
       }
     } catch (err) {
       console.error('Generation failed:', err);
