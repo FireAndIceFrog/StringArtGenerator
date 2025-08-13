@@ -206,6 +206,101 @@ impl StringArtGenerator for GreedyGenerator {
         Ok(self.base.path.clone())
     }
 
+    fn generate_path_with_callback<F>(
+        &mut self,
+        num_lines: usize,
+        line_darkness: f32,
+        min_improvement_score: f32,
+        progress_frequency: usize,
+        mut callback: F,
+    ) -> Result<Vec<usize>>
+    where
+        F: FnMut(usize, usize, usize, usize, f32), // lines_completed, total, current_nail, next_nail, score
+    {
+        println!("Starting greedy path generation with streaming...");
+        println!("Parameters:");
+        println!("  - Max lines: {}", num_lines);
+        println!("  - Line darkness: {}", line_darkness);
+        println!("  - Min improvement score: {}", min_improvement_score);
+        println!("  - Progress frequency: every {} iterations", progress_frequency);
+
+        // Validate parameters
+        if num_lines == 0 {
+            return Err(StringArtError::InvalidParameter {
+                message: "num_lines must be greater than 0".to_string(),
+            });
+        }
+
+        if line_darkness <= 0.0 {
+            return Err(StringArtError::InvalidParameter {
+                message: "line_darkness must be positive".to_string(),
+            });
+        }
+
+        // Start at nail 0
+        let mut current_nail = 0;
+        self.base.path = vec![current_nail];
+
+        let mut consecutive_failures = 0;
+        let max_consecutive_failures = 100;
+
+        for iteration in 0..num_lines {
+            // Find the best next nail
+            match self.find_best_next_nail(current_nail, min_improvement_score) {
+                Some((best_next_nail, max_score)) => {
+                    // Reset failure counter
+                    consecutive_failures = 0;
+
+                    // Apply the line darkness to the residual image
+                    let start = self.base.nail_coords[current_nail];
+                    let end = self.base.nail_coords[best_next_nail];
+                    
+                    apply_line_darkness(
+                        &mut self.base.residual_image,
+                        start,
+                        end,
+                        line_darkness,
+                    );
+
+                    // Update current position and path
+                    current_nail = best_next_nail;
+                    self.base.path.push(current_nail);
+
+                    // Call progress callback every N iterations
+                    if iteration % progress_frequency == 0 || iteration == num_lines - 1 {
+                        let lines_completed = iteration + 1;
+                        callback(
+                            lines_completed,
+                            num_lines,
+                            self.base.path[self.base.path.len() - 2], // current_nail (previous)
+                            current_nail, // next_nail (current)
+                            max_score,
+                        );
+                    }
+                }
+                None => {
+                    consecutive_failures += 1;
+
+                    if consecutive_failures >= max_consecutive_failures {
+                        println!("Stopped early: No improvement for {} consecutive iterations", consecutive_failures);
+                        break;
+                    }
+                }
+            }
+        }
+
+        let total_lines = self.base.path.len().saturating_sub(1);
+        println!("Path generation complete. Total lines: {}", total_lines);
+
+        if total_lines == 0 {
+            return Err(StringArtError::PathGenerationFailed {
+                reason: "No valid lines could be generated".to_string(),
+            });
+        }
+
+        Ok(self.base.path.clone())
+    }
+
     fn get_path(&self) -> &[usize] {
         self.base.get_path()
     }

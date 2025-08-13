@@ -47,6 +47,18 @@ pub trait StringArtGenerator {
         save_every: usize,
     ) -> Result<Vec<usize>>;
 
+    /// Generate the string path with real-time progress callbacks
+    fn generate_path_with_callback<F>(
+        &mut self,
+        num_lines: usize,
+        line_darkness: f32,
+        min_improvement_score: f32,
+        progress_frequency: usize,
+        callback: F,
+    ) -> Result<Vec<usize>>
+    where
+        F: FnMut(usize, usize, usize, usize, f32); // lines_completed, total, current_nail, next_nail, score
+
     /// Get the current path
     fn get_path(&self) -> &[usize];
 
@@ -214,6 +226,21 @@ impl StringArtGenerator for AbstractStringArt {
         _save_every: usize,
     ) -> Result<Vec<usize>> {
         panic!("generate_path must be implemented by specific generator types");
+    }
+
+    /// This is abstract - should be overridden by specific implementations
+    fn generate_path_with_callback<F>(
+        &mut self,
+        _num_lines: usize,
+        _line_darkness: f32,
+        _min_improvement_score: f32,
+        _progress_frequency: usize,
+        _callback: F,
+    ) -> Result<Vec<usize>>
+    where
+        F: FnMut(usize, usize, usize, usize, f32),
+    {
+        panic!("generate_path_with_callback must be implemented by specific generator types");
     }
 
     fn get_path(&self) -> &[usize] {

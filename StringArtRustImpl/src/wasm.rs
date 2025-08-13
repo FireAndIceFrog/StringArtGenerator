@@ -3,8 +3,7 @@
 //! This module provides JavaScript-friendly interfaces for the string art
 //! generation algorithms, enabling real-time streaming of results to web applications.
 
-use crate::abstract_generator::{StringArtConfig, StringArtGenerator};
-use crate::greedy_generator::GreedyGenerator;
+use crate::greedy_generator::{GreedyGenerator, StringArtConfig, StringArtGenerator};
 use crate::utils::Coord;
 use crate::error::StringArtError;
 use serde::{Deserialize, Serialize};
@@ -195,6 +194,25 @@ impl StringArtWasm {
         min_improvement_score: f32,
         progress_callback: &Function,
     ) -> Promise {
+        self.generate_path_streaming_with_frequency(
+            max_lines,
+            line_darkness,
+            min_improvement_score,
+            20, // Default to every 20 steps
+            progress_callback,
+        )
+    }
+
+    /// Generate string art path with configurable streaming frequency
+    #[wasm_bindgen]
+    pub fn generate_path_streaming_with_frequency(
+        &mut self,
+        max_lines: usize,
+        line_darkness: f32,
+        min_improvement_score: f32,
+        progress_frequency: usize,
+        progress_callback: &Function,
+    ) -> Promise {
         let generator = match self.generator.take() {
             Some(gen) => gen,
             None => return Promise::reject(&JsValue::from_str("Generator not initialized")),
@@ -208,6 +226,7 @@ impl StringArtWasm {
                 max_lines,
                 line_darkness,
                 min_improvement_score,
+                progress_frequency,
                 progress_callback,
             ).await;
 
@@ -257,49 +276,42 @@ impl StringArtWasm {
         GreedyGenerator::from_image_data(image_bytes, config.clone().into())
     }
 
-    /// Generate path with streaming updates (async)
+    /// Generate path with real streaming updates (async)
     async fn generate_with_streaming(
         mut generator: GreedyGenerator,
         max_lines: usize,
         line_darkness: f32,
         min_improvement_score: f32,
+        progress_frequency: usize,
         progress_callback: Function,
     ) -> std::result::Result<Vec<usize>, StringArtError> {
-        // For now, we'll simulate streaming by calling the callback periodically
-        // In a full implementation, we'd modify the greedy algorithm to yield control
+        console::log_1(&"Starting real-time streaming generation...".into());
         
-        console::log_1(&"Starting streaming generation...".into());
-        
-        let path = generator.generate_path(max_lines, line_darkness, min_improvement_score, 0)?;
-        
-        // Simulate streaming by sending progress updates
-        for (i, window) in path.windows(2).enumerate() {
-            let progress = ProgressInfo {
-                lines_completed: i + 1,
-                total_lines: path.len() - 1,
-                current_nail: window[0],
-                next_nail: window[1],
-                score: 0.0, // We'd need to modify the generator to provide real scores
-                completion_percent: ((i + 1) as f32 / (path.len() - 1) as f32) * 100.0,
-            };
+        // Use the new streaming method with real-time callbacks
+        let path = generator.generate_path_with_callback(
+            max_lines,
+            line_darkness,
+            min_improvement_score,
+            progress_frequency,
+            |lines_completed, total_lines, current_nail, next_nail, score| {
+                // Create progress info
+                let progress = ProgressInfo {
+                    lines_completed,
+                    total_lines,
+                    current_nail,
+                    next_nail,
+                    score,
+                    completion_percent: (lines_completed as f32 / total_lines as f32) * 100.0,
+                };
 
-            let progress_js = serde_wasm_bindgen::to_value(&progress)
-                .map_err(|e| StringArtError::SerializationError {
-                    message: format!("Failed to serialize progress: {}", e),
-                })?;
+                // Serialize and send to JavaScript
+                if let Ok(progress_js) = serde_wasm_bindgen::to_value(&progress) {
+                    let _ = progress_callback.call1(&JsValue::NULL, &progress_js);
+                }
+            },
+        )?;
 
-            // Call the progress callback
-            let _ = progress_callback.call1(&JsValue::NULL, &progress_js);
-
-            // Yield control every 10 lines to prevent blocking
-            if i % 10 == 0 {
-                wasm_bindgen_futures::JsFuture::from(
-                    js_sys::Promise::resolve(&JsValue::from(0))
-                ).await.ok();
-            }
-        }
-
-        console::log_1(&"Generation complete!".into());
+        console::log_1(&"Real-time streaming generation complete!".into());
         Ok(path)
     }
 }

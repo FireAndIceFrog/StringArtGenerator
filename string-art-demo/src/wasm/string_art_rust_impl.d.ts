@@ -46,6 +46,10 @@ export class StringArtWasm {
    */
   generate_path_streaming(max_lines: number, line_darkness: number, min_improvement_score: number, progress_callback: Function): Promise<any>;
   /**
+   * Generate string art path with configurable streaming frequency
+   */
+  generate_path_streaming_with_frequency(max_lines: number, line_darkness: number, min_improvement_score: number, progress_frequency: number, progress_callback: Function): Promise<any>;
+  /**
    * Get the current path as a JavaScript array
    */
   get_current_path(): Array<any>;
@@ -117,6 +121,7 @@ export interface InitOutput {
   readonly stringartwasm_get_nail_coordinates: (a: number) => any;
   readonly stringartwasm_get_config: (a: number) => number;
   readonly stringartwasm_generate_path_streaming: (a: number, b: number, c: number, d: number, e: any) => any;
+  readonly stringartwasm_generate_path_streaming_with_frequency: (a: number, b: number, c: number, d: number, e: number, f: any) => any;
   readonly stringartwasm_get_current_path: (a: number) => any;
   readonly stringartwasm_get_nail_count: (a: number) => number;
   readonly stringartwasm_get_image_size: (a: number) => number;
@@ -128,16 +133,16 @@ export interface InitOutput {
   readonly main: () => void;
   readonly __wbg_set_wasmstringartconfig_num_nails: (a: number, b: number) => void;
   readonly __wbg_set_wasmstringartconfig_image_size: (a: number, b: number) => void;
-  readonly __wbindgen_malloc: (a: number, b: number) => number;
-  readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
   readonly __wbindgen_exn_store: (a: number) => void;
   readonly __externref_table_alloc: () => number;
-  readonly __wbindgen_export_4: WebAssembly.Table;
+  readonly __wbindgen_export_2: WebAssembly.Table;
   readonly __wbindgen_free: (a: number, b: number, c: number) => void;
+  readonly __wbindgen_malloc: (a: number, b: number) => number;
+  readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
   readonly __wbindgen_export_6: WebAssembly.Table;
   readonly __externref_table_dealloc: (a: number) => void;
-  readonly closure84_externref_shim: (a: number, b: number, c: any) => void;
-  readonly closure142_externref_shim: (a: number, b: number, c: any, d: any) => void;
+  readonly closure79_externref_shim: (a: number, b: number, c: any) => void;
+  readonly closure96_externref_shim: (a: number, b: number, c: any, d: any) => void;
   readonly __wbindgen_start: () => void;
 }
 
