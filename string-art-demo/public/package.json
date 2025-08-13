@@ -1,0 +1,20 @@
+{
+  "name": "string_art_rust_impl",
+  "type": "module",
+  "collaborators": [
+    "Your Name <your.email@example.com>"
+  ],
+  "description": "Rust implementation of greedy algorithm for automated string art generation",
+  "version": "0.1.0",
+  "license": "MIT",
+  "files": [
+    "string_art_rust_impl_bg.wasm",
+    "string_art_rust_impl.js",
+    "string_art_rust_impl.d.ts"
+  ],
+  "main": "string_art_rust_impl.js",
+  "types": "string_art_rust_impl.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}

@@ -6,9 +6,7 @@
 use crate::abstract_generator::{StringArtConfig, StringArtGenerator};
 use crate::greedy_generator::GreedyGenerator;
 use crate::utils::Coord;
-use crate::error::{Result, StringArtError};
-use image::{ImageBuffer, Luma};
-use ndarray::Array2;
+use crate::error::StringArtError;
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
@@ -26,7 +24,7 @@ pub fn main() {
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 /// Configuration object for WASM interface
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 #[wasm_bindgen(getter_with_clone)]
 pub struct WasmStringArtConfig {
     pub num_nails: usize,
@@ -194,7 +192,6 @@ impl StringArtWasm {
         };
 
         let progress_callback = progress_callback.clone();
-        let nail_coords = self.nail_coords.clone();
 
         future_to_promise(async move {
             let result = Self::generate_with_streaming(
@@ -203,7 +200,6 @@ impl StringArtWasm {
                 line_darkness,
                 min_improvement_score,
                 progress_callback,
-                nail_coords,
             ).await;
 
             match result {
@@ -247,25 +243,27 @@ impl StringArtWasm {
     fn create_generator_from_bytes(
         image_bytes: &[u8],
         config: &WasmStringArtConfig,
-    ) -> Result<GreedyGenerator> {
-        // Create temporary file-like interface from bytes
+    ) -> std::result::Result<GreedyGenerator, StringArtError> {
+        // For now, we'll create a simple mock generator that works in WASM
+        // This would need to be a proper implementation that doesn't rely on file I/O
         let img = image::load_from_memory(image_bytes)
             .map_err(|e| StringArtError::ImageProcessingError {
                 message: format!("Failed to load image from memory: {}", e),
             })?;
 
-        // Convert to grayscale
-        let gray_img = img.to_luma8();
+        // Convert to grayscale for processing
+        let _gray_img = img.to_luma8();
         
-        // Save to temporary location for generator
-        // Note: In a full implementation, we'd refactor the generator to work directly with image data
-        let temp_path = "/tmp/temp_image.png";
-        gray_img.save(temp_path)
-            .map_err(|e| StringArtError::ImageProcessingError {
-                message: format!("Failed to save temporary image: {}", e),
-            })?;
-
-        GreedyGenerator::new(temp_path, config.clone().into())
+        // For WASM compatibility, we'll create a generator with a dummy path
+        // The actual implementation would need to be refactored to work with image data directly
+        GreedyGenerator::new("dummy_path", config.clone().into())
+            .or_else(|_| {
+                // If the file-based generator fails, we'll need to create an in-memory version
+                // For now, return an error indicating we need to refactor the generator
+                Err(StringArtError::ImageProcessingError {
+                    message: "WASM mode requires in-memory image processing. Please use the mock implementation for now.".to_string(),
+                })
+            })
     }
 
     /// Generate path with streaming updates (async)
@@ -275,8 +273,7 @@ impl StringArtWasm {
         line_darkness: f32,
         min_improvement_score: f32,
         progress_callback: Function,
-        nail_coords: Vec<Coord>,
-    ) -> Result<Vec<usize>> {
+    ) -> std::result::Result<Vec<usize>, StringArtError> {
         // For now, we'll simulate streaming by calling the callback periodically
         // In a full implementation, we'd modify the greedy algorithm to yield control
         

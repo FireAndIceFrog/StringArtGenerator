@@ -1,4 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
+import init, { 
+  StringArtWasm, 
+  WasmStringArtConfig, 
+  test_wasm,
+  get_version
+} from '../wasm/string_art_rust_impl.js';
 
 interface StringArtConfig {
   num_nails: number;
@@ -21,36 +27,11 @@ interface ProgressInfo {
   path_segment: [number, number];
 }
 
-interface StringArtWasmInstance {
-  get_nail_coordinates(): Array<[number, number]>;
-  get_config(): StringArtConfig;
-  generate_path_streaming(
-    max_lines: number,
-    line_darkness: number,
-    min_improvement_score: number,
-    progress_callback: (progress: ProgressInfo) => void
-  ): Promise<number[]>;
-  get_current_path(): number[];
-  get_nail_count(): number;
-  get_image_size(): number;
-}
-
-interface StringArtWasmConstructor {
-  new(imageData: Uint8Array, config?: StringArtConfig): StringArtWasmInstance;
-}
-
-interface WasmStringArtConfigStatic {
-  new(): StringArtConfig;
-  preset_fast(): StringArtConfig;
-  preset_balanced(): StringArtConfig;
-  preset_high_quality(): StringArtConfig;
-}
-
 interface WasmModule {
-  StringArtWasm: StringArtWasmConstructor;
-  WasmStringArtConfig: WasmStringArtConfigStatic;
-  test_wasm(): string;
-  get_version(): string;
+  StringArtWasm: typeof StringArtWasm;
+  WasmStringArtConfig: typeof WasmStringArtConfig;
+  test_wasm: typeof test_wasm;
+  get_version: typeof get_version;
 }
 
 export interface UseStringArtReturn {
@@ -82,20 +63,19 @@ export const useStringArt = (): UseStringArtReturn => {
 
         // Try to load the real WASM module first
         try {
-          // Load the WASM module from the public directory
-          const wasmModule = await import('/string_art_rust_impl.js');
-          await wasmModule.default();
+          // Initialize the WASM module
+          await init();
           
           // Create the real WASM interface
           const realWasm: WasmModule = {
-            StringArtWasm: wasmModule.StringArtWasm,
-            WasmStringArtConfig: wasmModule.WasmStringArtConfig,
-            test_wasm: wasmModule.test_wasm,
-            get_version: wasmModule.get_version,
+            StringArtWasm,
+            WasmStringArtConfig,
+            test_wasm,
+            get_version,
           };
           
           setWasmModule(realWasm);
-          console.log('Real WASM module loaded:', realWasm.test_wasm());
+          console.log('Real WASM module loaded:', test_wasm());
           return;
         } catch (wasmError) {
           console.warn('Real WASM module not available, using mock:', wasmError);
@@ -103,14 +83,16 @@ export const useStringArt = (): UseStringArtReturn => {
 
         // Fallback to mock WASM module for testing
         const mockWasm: WasmModule = {
-          StringArtWasm: class MockStringArtWasm implements StringArtWasmInstance {
-            constructor(imageData: Uint8Array, _config?: StringArtConfig) {
+          StringArtWasm: class MockStringArtWasm {
+            constructor(imageData: Uint8Array, _config?: WasmStringArtConfig) {
               console.log('Mock StringArt created with image data:', imageData.length, 'bytes');
             }
 
-            get_nail_coordinates(): Array<[number, number]> {
+            free() {}
+
+            get_nail_coordinates(): any[] {
               // Generate mock circular nail coordinates
-              const coords: Array<[number, number]> = [];
+              const coords: any[] = [];
               const centerX = 250;
               const centerY = 250;
               const radius = 240;
@@ -125,25 +107,16 @@ export const useStringArt = (): UseStringArtReturn => {
               return coords;
             }
 
-            get_config(): StringArtConfig {
-              return {
-                num_nails: 360,
-                image_size: 500,
-                extract_subject: true,
-                remove_shadows: true,
-                preserve_eyes: true,
-                preserve_negative_space: false,
-                negative_space_penalty: 0.5,
-                negative_space_threshold: 200.0,
-              };
+            get_config(): WasmStringArtConfig {
+              return new WasmStringArtConfig();
             }
 
             async generate_path_streaming(
               max_lines: number,
               line_darkness: number,
               min_improvement_score: number,
-              progress_callback: (progress: ProgressInfo) => void
-            ): Promise<number[]> {
+              progress_callback: Function
+            ): Promise<any> {
               const path: number[] = [0];
               
               // Simulate path generation with progress updates
@@ -154,7 +127,7 @@ export const useStringArt = (): UseStringArtReturn => {
                 const nextNail = Math.floor(Math.random() * 360);
                 path.push(nextNail);
                 
-                const progress: ProgressInfo = {
+                const progress = {
                   lines_completed: i + 1,
                   total_lines: max_lines,
                   current_nail: path[path.length - 2],
@@ -173,7 +146,7 @@ export const useStringArt = (): UseStringArtReturn => {
               return path;
             }
 
-            get_current_path(): number[] {
+            get_current_path(): any[] {
               return [];
             }
 
@@ -184,50 +157,40 @@ export const useStringArt = (): UseStringArtReturn => {
             get_image_size(): number {
               return 500;
             }
-          } as StringArtWasmConstructor,
+          } as any,
           
-          WasmStringArtConfig: {
-            new: () => ({
-              num_nails: 720,
-              image_size: 500,
-              extract_subject: true,
-              remove_shadows: true,
-              preserve_eyes: true,
-              preserve_negative_space: false,
-              negative_space_penalty: 0.5,
-              negative_space_threshold: 200.0,
-            }),
-            preset_fast: () => ({
-              num_nails: 360,
-              image_size: 300,
-              extract_subject: false,
-              remove_shadows: false,
-              preserve_eyes: false,
-              preserve_negative_space: false,
-              negative_space_penalty: 0.5,
-              negative_space_threshold: 200.0,
-            }),
-            preset_balanced: () => ({
-              num_nails: 720,
-              image_size: 500,
-              extract_subject: true,
-              remove_shadows: true,
-              preserve_eyes: true,
-              preserve_negative_space: false,
-              negative_space_penalty: 0.5,
-              negative_space_threshold: 200.0,
-            }),
-            preset_high_quality: () => ({
-              num_nails: 1440,
-              image_size: 800,
-              extract_subject: true,
-              remove_shadows: true,
-              preserve_eyes: true,
-              preserve_negative_space: false,
-              negative_space_penalty: 0.5,
-              negative_space_threshold: 200.0,
-            }),
-          },
+          WasmStringArtConfig: class MockWasmStringArtConfig {
+            free() {}
+            num_nails = 720;
+            image_size = 500;
+            extract_subject = true;
+            remove_shadows = true;
+            preserve_eyes = true;
+            preserve_negative_space = false;
+            negative_space_penalty = 0.5;
+            negative_space_threshold = 200.0;
+
+            static preset_fast() {
+              const config = new MockWasmStringArtConfig();
+              config.num_nails = 360;
+              config.image_size = 300;
+              config.extract_subject = false;
+              config.remove_shadows = false;
+              config.preserve_eyes = false;
+              return config;
+            }
+
+            static preset_balanced() {
+              return new MockWasmStringArtConfig();
+            }
+
+            static preset_high_quality() {
+              const config = new MockWasmStringArtConfig();
+              config.num_nails = 1440;
+              config.image_size = 800;
+              return config;
+            }
+          } as any,
           
           test_wasm(): string {
             return "Mock WASM module loaded successfully!";
@@ -262,7 +225,18 @@ export const useStringArt = (): UseStringArtReturn => {
       }
 
       try {
-        const generator = new wasmModule.StringArtWasm(imageData, config);
+        // Convert StringArtConfig to WasmStringArtConfig
+        const wasmConfig = new wasmModule.WasmStringArtConfig();
+        wasmConfig.num_nails = config.num_nails;
+        wasmConfig.image_size = config.image_size;
+        wasmConfig.extract_subject = config.extract_subject;
+        wasmConfig.remove_shadows = config.remove_shadows;
+        wasmConfig.preserve_eyes = config.preserve_eyes;
+        wasmConfig.preserve_negative_space = config.preserve_negative_space;
+        wasmConfig.negative_space_penalty = config.negative_space_penalty;
+        wasmConfig.negative_space_threshold = config.negative_space_threshold;
+
+        const generator = new wasmModule.StringArtWasm(imageData, wasmConfig);
         const path = await generator.generate_path_streaming(
           1000, // max_lines
           25.0, // line_darkness

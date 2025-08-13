@@ -8,14 +8,15 @@ echo "🦀 Building WASM package..."
 cd StringArtRustImpl
 
 # Build the WASM package with wasm-pack
-wasm-pack build --target web --features wasm
+wasm-pack build --target web --features wasm --no-default-features
 
 echo "✅ WASM package built successfully!"
 
-# Copy the package to the React app's public directory
-if [ -d "../string-art-demo/public" ]; then
+# Copy the package to the React app's src directory for proper importing
+if [ -d "../string-art-demo/src" ]; then
     echo "📦 Copying WASM files to React app..."
-    cp -r pkg/* ../string-art-demo/public/
+    mkdir -p ../string-art-demo/src/wasm
+    cp -r pkg/* ../string-art-demo/src/wasm/
     echo "✅ WASM files copied to React app!"
 fi
 
