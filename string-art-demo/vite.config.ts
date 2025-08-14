@@ -1,5 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { NodeGlobalsPolyfillPlugin } from '@esbuild-plugins/node-globals-polyfill'
+import { NodeModulesPolyfillPlugin } from '@esbuild-plugins/node-modules-polyfill'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -14,7 +16,21 @@ export default defineConfig({
     }
   },
   optimizeDeps: {
-    exclude: ['string-art-wasm']
+    exclude: ['string-art-wasm'],
+    esbuildOptions: {
+      plugins: [
+        NodeGlobalsPolyfillPlugin({
+          process: true,
+          buffer: true,
+        }),
+        NodeModulesPolyfillPlugin(),
+      ],
+    },
+  },
+  resolve: {
+    alias: {
+      crypto: 'crypto-browserify',
+    },
   },
   build: {
     target: 'esnext'
