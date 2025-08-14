@@ -8,7 +8,7 @@ echo "🦀 Building WASM package..."
 cd StringArtRustImpl
 
 # Build the WASM package with wasm-pack
-wasm-pack build --target web --features wasm --no-default-features
+wasm-pack build --target web --features wasm
 
 echo "✅ WASM package built successfully!"
 

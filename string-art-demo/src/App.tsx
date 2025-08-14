@@ -34,7 +34,7 @@ function App() {
         setProgress(progressInfo);
         
         // Update the path in real-time
-        setCurrentPath(progressInfo.current_path || []);
+        setCurrentPath((s) => (progressInfo.current_path && [...s, ...progressInfo.current_path] || s));
       };
 
       const onNailCoords = (coords: Array<[number, number]>) => {

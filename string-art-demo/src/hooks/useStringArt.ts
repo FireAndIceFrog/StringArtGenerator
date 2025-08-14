@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import init, { 
   StringArtWasm, 
   WasmStringArtConfig, 
@@ -88,6 +88,16 @@ export const useStringArt = (): UseStringArtReturn => {
     loadWasm();
   }, []);
 
+  const workerRef = useRef<Worker | null>(null);
+
+  useEffect(() => {
+    // Initialize the service worker
+    workerRef.current = new Worker(new URL('../workers/stringArtWorker.ts', import.meta.url), { type: 'module' });
+    return () => {
+      workerRef.current?.terminate();
+    };
+  }, []);
+
   const generateStringArt = useCallback(
     async (
       imageData: Uint8Array,
@@ -95,74 +105,39 @@ export const useStringArt = (): UseStringArtReturn => {
       onProgress: (progress: ProgressInfo) => void,
       onNailCoords?: (coords: Array<[number, number]>) => void
     ): Promise<{ path: number[] | null; nailCoords: Array<[number, number]> }> => {
-      if (!wasmModule) {
-        throw new Error('WASM module not loaded');
+      if (!workerRef.current) {
+        throw new Error('Service worker not initialized');
       }
 
-      try {
-        // Convert StringArtConfig to WasmStringArtConfig
-        const wasmConfig = new wasmModule.WasmStringArtConfig();
-        wasmConfig.num_nails = config.num_nails;
-        wasmConfig.image_size = config.image_size;
-        wasmConfig.extract_subject = config.extract_subject;
-        wasmConfig.remove_shadows = config.remove_shadows;
-        wasmConfig.preserve_eyes = config.preserve_eyes;
-        wasmConfig.preserve_negative_space = config.preserve_negative_space;
-        wasmConfig.negative_space_penalty = config.negative_space_penalty;
-        wasmConfig.negative_space_threshold = config.negative_space_threshold;
+      return new Promise((resolve, reject) => {
+        workerRef.current!.onmessage = (event) => {
+          const { type, data } = event.data;
 
-        const generator = new wasmModule.StringArtWasm(imageData, wasmConfig);
-        
-        // Get nail coordinates from WASM and scale for display
-        const wasmNailCoords = generator.get_nail_coordinates();
-        const displaySize = 500; // Canvas display size
-        const wasmImageSize = config.image_size; // WASM processing size (2000px)
-        const scale = displaySize / wasmImageSize;
-        
-        const scaledNailCoords: Array<[number, number]> = [];
-        for (let i = 0; i < wasmNailCoords.length; i++) {
-          const coord = wasmNailCoords[i];
-          scaledNailCoords.push([
-            Math.round(coord[0] * scale),
-            Math.round(coord[1] * scale)
-          ]);
-        }
-        
-        // Notify about nail coordinates
-        if (onNailCoords) {
-          onNailCoords(scaledNailCoords);
-        }
-        
-        console.log('🎯 JS: Starting string art generation...');
-        
-        const path = await generator.generate_path_streaming_with_frequency(
-          1000, // max_lines
-          25.0, // line_darkness
-          10.0, // min_improvement_score
-          10, // progress_frequency (fixed: was 10.0, now 10 - integer!)
-          (progress: ProgressInfo) => {
-            console.log('🎉 JS CALLBACK RECEIVED:', progress);
-            console.log('📜 Current Path:', progress.current_path);
-            onProgress(progress);
+          if (type === 'nailCoords' && onNailCoords) {
+            onNailCoords(data);
+          } else if (type === 'progress') {
+            onProgress(data);
+          } else if (type === 'complete') {
+            resolve({ path: data, nailCoords: [] });
+          } else if (type === 'error') {
+            reject(new Error(data));
           }
-        );
-        
-        console.log('✅ JS: String art generation completed!');
-        
-        return { path, nailCoords: scaledNailCoords };
-      } catch (err) {
-        console.error('String art generation failed:', err);
-        setError(err instanceof Error ? err.message : 'Generation failed');
-        return { path: null, nailCoords: [] };
-      }
-    },
-    [wasmModule]
-  );
+        };
+
+        workerRef.current!.postMessage({
+          imageData,
+          config,
+          wasmModuleUrl: '../wasm/string_art_rust_impl.js',
+        });
+    });
+  },
+  []
+);
 
   const presets = {
-    fast: () => wasmModule?.WasmStringArtConfig.preset_fast() || {} as StringArtConfig,
-    balanced: () => wasmModule?.WasmStringArtConfig.preset_balanced() || {} as StringArtConfig,
-    highQuality: () => wasmModule?.WasmStringArtConfig.preset_high_quality() || {} as StringArtConfig,
+    fast: () => ({ num_nails: 360, image_size: 2000, extract_subject: true, remove_shadows: true, preserve_eyes: false, preserve_negative_space: false, negative_space_penalty: 0, negative_space_threshold: 0 }),
+    balanced: () => ({ num_nails: 720, image_size: 2000, extract_subject: true, remove_shadows: true, preserve_eyes: true, preserve_negative_space: true, negative_space_penalty: 5, negative_space_threshold: 10 }),
+    highQuality: () => ({ num_nails: 1440, image_size: 2000, extract_subject: true, remove_shadows: true, preserve_eyes: true, preserve_negative_space: true, negative_space_penalty: 10, negative_space_threshold: 20 }),
   };
 
   return {

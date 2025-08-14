@@ -3,6 +3,7 @@ use crate::error::{Result, StringArtError};
 use crate::utils::{apply_line_darkness, calculate_line_score, calculate_line_score_with_negative_space};
 use indicatif::{ProgressBar, ProgressStyle};
 use rayon::prelude::*;
+use rayon::iter::IntoParallelIterator;
 
 /// Greedy algorithm implementation for string art generation
 pub struct GreedyGenerator {
@@ -192,10 +193,11 @@ impl StringArtGenerator for GreedyGenerator {
                         let lines_completed = iteration + 1;
                         println!("🚀 CALLING CALLBACK: iteration={}, lines_completed={}, current_nail={}, next_nail={}, score={:.2}", 
                             iteration, lines_completed, self.base.path[self.base.path.len() - 2], current_nail, max_score);
+                        let recent_changes = &self.base.path[self.base.path.len().saturating_sub(progress_frequency)..];
                         callback(
                             lines_completed,
                             num_lines,
-                            &self.base.path, // Pass the full path
+                            recent_changes, // Pass only the last changes
                             max_score,
                         );
                         println!("✅ CALLBACK COMPLETED");
