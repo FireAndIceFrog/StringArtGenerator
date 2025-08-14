@@ -6,6 +6,7 @@ use rayon::prelude::*;
 use rayon::iter::IntoParallelIterator;
 
 /// Greedy algorithm implementation for string art generation
+#[derive(Clone)]
 pub struct GreedyGenerator {
     base: AbstractStringArt,
 }
@@ -94,7 +95,7 @@ impl StringArtGenerator for GreedyGenerator {
         num_lines: usize,
         line_darkness: f32,
         min_improvement_score: f32,
-        _save_every: usize,
+        save_every: usize,
     ) -> Result<Vec<usize>> {
         // Use the callback method with a progress bar for CLI usage
         let progress_bar = ProgressBar::new(num_lines as u64);
@@ -104,12 +105,13 @@ impl StringArtGenerator for GreedyGenerator {
                 .unwrap()
                 .progress_chars("##-"),
         );
-
+        let mut closure_self =  self.clone();
+        closure_self.base.path.clear();
         let result = self.generate_path_with_callback(
             num_lines,
             line_darkness, 
             min_improvement_score,
-            1, // Progress frequency: every iteration for CLI
+            save_every, 
             |lines_completed, _total_lines, current_path, score| {
                 progress_bar.set_message(format!(
                     "String {}: path {:?} (score: {:.2})",
@@ -118,6 +120,15 @@ impl StringArtGenerator for GreedyGenerator {
                     score
                 ));
                 progress_bar.set_position(lines_completed as u64);
+
+                // Save progress periodically outside the callback
+                let base_output_path = "string_art_progress";
+                closure_self.base.path.extend_from_slice(current_path);
+                if let Err(e) = closure_self.save_progress(base_output_path) {
+                    eprintln!("Warning: Failed to save progress: {}", e);
+                } else {
+                    println!("Progress saved");
+                }
             }
         );
 
@@ -249,7 +260,7 @@ impl StringArtGenerator for GreedyGenerator {
         self.base.save_path(output_path)
     }
 
-    fn save_progress(&self, base_output_path: &str) -> Result<()> {
+    fn save_progress(&mut self, base_output_path: &str) -> Result<()> {
         self.base.save_progress(base_output_path)
     }
 }

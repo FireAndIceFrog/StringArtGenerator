@@ -75,10 +75,11 @@ pub trait StringArtGenerator {
     fn save_path(&self, output_path: &str) -> Result<()>;
 
     /// Save current progress (both image and path)
-    fn save_progress(&self, base_output_path: &str) -> Result<()>;
+    fn save_progress(&mut self, base_output_path: &str) -> Result<()>;
 }
 
 /// Base implementation for string art generators
+#[derive(Clone)]
 pub struct AbstractStringArt {
     pub config: StringArtConfig,
     pub target_image: Array2<f32>,
@@ -286,7 +287,7 @@ impl StringArtGenerator for AbstractStringArt {
         Ok(())
     }
 
-    fn save_progress(&self, base_output_path: &str) -> Result<()> {
+    fn save_progress(&mut self, base_output_path: &str) -> Result<()> {
         if self.path.is_empty() {
             println!("No path to save yet.");
             return Ok(());
