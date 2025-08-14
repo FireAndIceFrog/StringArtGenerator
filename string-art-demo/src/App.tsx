@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { ImageUploader } from './components/ImageUploader';
 import { StringArtCanvas } from './components/StringArtCanvas';
 import { useStringArt, type StringArtConfig, type ProgressInfo } from './hooks/useStringArt';
