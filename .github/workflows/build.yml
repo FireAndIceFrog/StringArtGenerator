@@ -50,6 +50,12 @@ jobs:
       run: npm run build
       working-directory: string-art-demo
 
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: string-art-demo
+        path: string-art-demo/dist
+
     - name: Create Release
       if: github.event_name == 'release'
       uses: actions/create-release@v1
@@ -70,10 +76,6 @@ jobs:
         uses: actions/checkout@v4
       - name: Setup Pages
         uses: actions/configure-pages@v5
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: 'string-art-demo/dist'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
