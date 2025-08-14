@@ -46,14 +46,15 @@ jobs:
     - name: Build WASM
       run: ./build-wasm.sh
 
-    - name: Build JavaScript project
+    - name: Build static files
+      id: build
       run: npm run build
       working-directory: string-art-demo
 
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
+    - name: Upload static files as artifact
+      id: deployment
+      uses: actions/upload-pages-artifact@v3
       with:
-        name: github-pages
         path: string-art-demo/dist
 
     - name: Create Release
