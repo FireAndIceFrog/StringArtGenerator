@@ -172,12 +172,10 @@ impl StringArtGenerator for GreedyGenerator {
         self.base.path = vec![current_nail];
 
         let mut consecutive_failures = 0;
-        let max_consecutive_failures = 100;
+        let max_consecutive_failures = 3;
+        let mut start_time = std::time::Instant::now();
 
         for iteration in 0..num_lines {
-            println!("Iteration {}: progress_frequency={}, should_callback={}", 
-                iteration, progress_frequency, iteration % progress_frequency == 0);
-
             // Find the best next nail
             match self.find_best_next_nail(current_nail, min_improvement_score) {
                 Some((best_next_nail, max_score)) => {
@@ -211,9 +209,10 @@ impl StringArtGenerator for GreedyGenerator {
                             recent_changes, // Pass only the last changes
                             max_score,
                         );
-                        println!("✅ CALLBACK COMPLETED");
-                    } else {
-                        println!("⏭️  Skipping callback for iteration {}", iteration);
+                        let end_time = std::time::Instant::now();
+                        let duration = end_time.duration_since(start_time);
+                        println!("✅ CALLBACK COMPLETED in {:?}", duration);
+                        start_time = end_time; // Reset start time for next iteration
                     }
                 }
                 None => {
@@ -252,11 +251,11 @@ impl StringArtGenerator for GreedyGenerator {
         self.base.get_residual_image()
     }
 
-    fn render_image(&self, output_path: &str, line_color: Option<(u8, u8, u8)>) -> Result<()> {
+    fn render_image(&mut self, output_path: &str, line_color: Option<(u8, u8, u8)>) -> Result<()> {
         self.base.render_image(output_path, line_color)
     }
 
-    fn save_path(&self, output_path: &str) -> Result<()> {
+    fn save_path(&mut self, output_path: &str) -> Result<()> {
         self.base.save_path(output_path)
     }
 

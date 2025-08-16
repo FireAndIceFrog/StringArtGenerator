@@ -3,6 +3,7 @@ use crate::image_processing::{
     create_eye_enhancement_mask, detect_eyes, load_and_preprocess_image, EyeRegion,
 };
 use crate::utils::{calculate_nail_coords, Coord};
+use std::collections::HashMap;
 use image::{ImageBuffer, Rgb, RgbImage};
 use ndarray::Array2;
 use std::fs::File;
@@ -69,10 +70,10 @@ pub trait StringArtGenerator {
     fn get_residual_image(&self) -> &Array2<f32>;
 
     /// Render the current path to an image
-    fn render_image(&self, output_path: &str, line_color: Option<(u8, u8, u8)>) -> Result<()>;
+    fn render_image(&mut self, output_path: &str, line_color: Option<(u8, u8, u8)>) -> Result<()>;
 
     /// Save the path to a text file
-    fn save_path(&self, output_path: &str) -> Result<()>;
+    fn save_path(&mut self, output_path: &str) -> Result<()>;
 
     /// Save current progress (both image and path)
     fn save_progress(&mut self, base_output_path: &str) -> Result<()>;
@@ -89,6 +90,7 @@ pub struct AbstractStringArt {
     pub eye_protection_mask: Array2<f32>,
     pub negative_space_mask: Array2<f32>,
     pub path: Vec<usize>,
+    pub line_pixel_cache: HashMap<(usize, usize), Vec<Coord>>, // (start, end) -> pixels
 }
 
 impl AbstractStringArt {
@@ -176,11 +178,11 @@ impl AbstractStringArt {
             eye_protection_mask,
             negative_space_mask,
             path: Vec::new(),
+            line_pixel_cache: HashMap::new(),
         })
     }
-
     /// Render the string art as an image
-    pub fn render_to_image(&self, line_color: Option<(u8, u8, u8)>) -> RgbImage {
+    pub fn render_to_image(&mut self, line_color: Option<(u8, u8, u8)>) -> RgbImage {
         let size = self.config.image_size as u32;
         let color = line_color.unwrap_or((0, 0, 0)); // Default to black
         
@@ -188,7 +190,8 @@ impl AbstractStringArt {
         let mut img = ImageBuffer::from_pixel(size, size, Rgb([255u8, 255u8, 255u8]));
         
         // Draw lines between consecutive nails in the path
-        for window in self.path.windows(2) {
+        let path = self.path.clone();
+        for window in path.windows(2){
             let start = self.nail_coords[window[0]];
             let end = self.nail_coords[window[1]];
             
@@ -198,13 +201,29 @@ impl AbstractStringArt {
         img
     }
 
-    /// Draw a line on the image using a simple line drawing algorithm
-    fn draw_line(&self, img: &mut RgbImage, start: Coord, end: Coord, color: (u8, u8, u8)) {
-        use crate::utils::get_line_pixels;
-        
-        let pixels = get_line_pixels(start, end);
+    /// Draw a line on the image using the cached pixel path if possible
+    fn draw_line(&mut self, img: &mut RgbImage, start: Coord, end: Coord, color: (u8, u8, u8)) {
         let (width, height) = img.dimensions();
-        
+
+        // Try to find indices for start and end in nail_coords
+        let start_idx = self.nail_coords.iter().position(|&c| c == start);
+        let end_idx = self.nail_coords.iter().position(|&c| c == end);
+
+        let pixels: &Vec<Coord> = if let (Some(i), Some(j)) = (start_idx, end_idx) {
+            let key = (i, j);
+            if !self.line_pixel_cache.contains_key(&key) {
+                let computed = crate::utils::get_line_pixels(start, end);
+                self.line_pixel_cache.insert(key, computed);
+            }
+            self.line_pixel_cache.get(&key).unwrap()
+        } else {
+            // Fallback to direct calculation if not found
+            // Note: not cached in this case
+            println!("Warning: Coordinates not found in nail_coords, calculating directly. ");
+            println!("This may be slow for large paths.");
+            &crate::utils::get_line_pixels(start, end)
+        };
+
         for pixel in pixels {
             if pixel.x >= 0 && pixel.x < width as i32 && pixel.y >= 0 && pixel.y < height as i32 {
                 img.put_pixel(
@@ -256,7 +275,7 @@ impl StringArtGenerator for AbstractStringArt {
         &self.residual_image
     }
 
-    fn render_image(&self, output_path: &str, line_color: Option<(u8, u8, u8)>) -> Result<()> {
+    fn render_image(&mut self, output_path: &str, line_color: Option<(u8, u8, u8)>) -> Result<()> {
         if self.path.is_empty() {
             println!("Warning: No path to render. Call generate_path() first.");
             return Ok(());
@@ -271,7 +290,7 @@ impl StringArtGenerator for AbstractStringArt {
         Ok(())
     }
 
-    fn save_path(&self, output_path: &str) -> Result<()> {
+    fn save_path(&mut self, output_path: &str) -> Result<()> {
         if self.path.is_empty() {
             println!("Warning: No path to save.");
             return Ok(());
