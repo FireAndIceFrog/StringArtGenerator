@@ -41,7 +41,7 @@ self.onmessage = async (event: MessageEvent<WorkerMessage>) => {
     // Generate the string art path with progress updates
     const path = await generator.generate_path_streaming_with_frequency(
       2000, // max_lines
-      100.0, // line_darkness
+      25.0, // line_darkness
       10.0, // min_improvement_score
       300, // progress_frequency
       (progress: ProgressInfo) => {

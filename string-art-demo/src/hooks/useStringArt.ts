@@ -135,9 +135,9 @@ export const useStringArt = (): UseStringArtReturn => {
 );
 
   const presets = {
-    fast: () => ({ num_nails: 360, image_size: 2000, extract_subject: true, remove_shadows: true, preserve_eyes: false, preserve_negative_space: false, negative_space_penalty: 0, negative_space_threshold: 0 }),
-    balanced: () => ({ num_nails: 720, image_size: 2000, extract_subject: true, remove_shadows: true, preserve_eyes: true, preserve_negative_space: true, negative_space_penalty: 5, negative_space_threshold: 10 }),
-    highQuality: () => ({ num_nails: 1440, image_size: 2000, extract_subject: true, remove_shadows: true, preserve_eyes: true, preserve_negative_space: true, negative_space_penalty: 10, negative_space_threshold: 20 }),
+    fast: () => ({ num_nails: 360, image_size: 2000, extract_subject: true, remove_shadows: true, preserve_eyes: true, preserve_negative_space: true, negative_space_penalty: 5, negative_space_threshold: 5 }),
+    balanced: () => ({ num_nails: 720, image_size: 2000, extract_subject: true, remove_shadows: true, preserve_eyes: true, preserve_negative_space: true, negative_space_penalty: 10, negative_space_threshold: 10 }),
+    highQuality: () => ({ num_nails: 1440, image_size: 2000, extract_subject: true, remove_shadows: true, preserve_eyes: true, preserve_negative_space: true, negative_space_penalty: 15, negative_space_threshold: 20 }),
   };
 
   return {

@@ -309,10 +309,20 @@ impl StringArtWasm {
                     console::log_1(&"❌ WASM: Failed to serialize progress data".into());
                 }
             },
-        )?;
+        );
 
-        console::log_1(&"Real-time streaming generation complete!".into());
-        Ok(path)
+        console::log_1(&"Real-time streaming generation complete! Check console for details.".into());
+        match path {
+            Ok(path) => {
+                console::log_1(&format!("✅ WASM: Path generation complete with {} nails", path.len()).into());
+                // Store the current path
+                Ok(path)
+            }
+            Err(e) => {
+                console::log_1(&format!("❌ WASM: Path generation failed: {}", e).into());
+                Err(e)
+            }
+        }
     }
 }
 
