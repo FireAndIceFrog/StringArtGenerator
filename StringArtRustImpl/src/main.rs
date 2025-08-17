@@ -225,7 +225,7 @@ fn main() {
     println!("Starting string art generation...");
     let start_time = std::time::Instant::now();
 
-    match generator.generate_path(lines, darkness, min_score) {
+    match generator.generate_path(lines, darkness, min_score, 300) {
         Ok(path) => {
             let duration = start_time.elapsed();
             println!("✓ Path generation completed in {:.2?}", duration);

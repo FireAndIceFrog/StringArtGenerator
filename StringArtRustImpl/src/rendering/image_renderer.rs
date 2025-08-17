@@ -47,21 +47,30 @@ impl ImageRenderer {
 
 impl ImageRendererTrait for ImageRenderer {
     fn render_to_image(&self, line_color: Option<(u8, u8, u8)>) -> Result<RgbImage> {
-        let state = self.state.read().unwrap();
-        let size = state.config.image_size as u32;
-        let color = line_color.unwrap_or((0, 0, 0));
-
-        let mut img = ImageBuffer::from_pixel(size, size, Rgb([255u8, 255u8, 255u8]));
-
-        if state.path.is_empty() {
-            return Err(StringArtError::PathGenerationFailed {
-                reason: "No path to render".to_string(),
-            });
+        let mut img;
+        let color;
+        let nail_coords; 
+        let path;
+        {
+            let state = match self.state.try_read() {
+                Err(_) => return Err(StringArtError::StateLock { message: "Cant get a lock on state".into() }),
+                Ok(state) => state,
+            };
+            let size = state.config.image_size as u32;
+            color = line_color.unwrap_or((0, 0, 0));
+            img = ImageBuffer::from_pixel(size, size, Rgb([255u8, 255u8, 255u8]));
+        
+            if state.path.is_empty() {
+                return Err(StringArtError::PathGenerationFailed {
+                    reason: "No path to render".to_string(),
+                });
+            }
+            nail_coords = state.nail_coords.clone();
+            path = state.path.clone();
         }
-
-        for window in state.path.windows(2) {
-            let start = state.nail_coords[window[0]];
-            let end = state.nail_coords[window[1]];
+        for window in path.windows(2) {
+            let start = nail_coords[window[0]];
+            let end = nail_coords[window[1]];
             self.draw_line(&mut img, start, end, color);
         }
 

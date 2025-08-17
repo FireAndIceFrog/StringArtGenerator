@@ -10,6 +10,7 @@ pub trait StringArtGenerator {
         num_lines: usize,
         line_darkness: f32,
         min_improvement_score: f32,
+        progress_frequency: usize,
     ) -> Result<Vec<usize>>;
 
     /// Generate the string path with real-time progress callbacks.

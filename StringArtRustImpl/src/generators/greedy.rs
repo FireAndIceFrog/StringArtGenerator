@@ -6,6 +6,7 @@ use crate::{ImageRenderer, ImageRendererTrait};
 use indicatif::{ProgressBar, ProgressStyle};
 use rayon::prelude::*;
 use std::sync::{Arc, RwLock};
+use std::time::Instant;
 
 /// Greedy algorithm implementation for string art generation.
 pub struct GreedyGenerator {
@@ -69,6 +70,7 @@ impl StringArtGenerator for GreedyGenerator {
         num_lines: usize,
         line_darkness: f32,
         min_improvement_score: f32,
+        progress_frequency: usize,
     ) -> Result<Vec<usize>> {
         let progress_bar = ProgressBar::new(num_lines as u64);
         progress_bar.set_style(
@@ -77,24 +79,26 @@ impl StringArtGenerator for GreedyGenerator {
                 .unwrap()
                 .progress_chars("##-"),
         );
+        let mut start = Instant::now();
         let image_renderer = ImageRenderer::new(self.state.clone());
         
-        self.generate_path_with_callback(num_lines, line_darkness, min_improvement_score, num_lines, |lines_completed, _total_lines, current_path, score| {
-            
-            progress_bar.set_message(format!(
-                "String {}: path {:?} (score: {:.2})",
-                lines_completed,
-                current_path,
-                score
-            ));
-            progress_bar.set_position(lines_completed as u64);
-
+        self.generate_path_with_callback(num_lines, line_darkness, min_improvement_score, progress_frequency, |lines_completed, _total_lines, _, score| {
+            let time_to_find_line = start.elapsed();
             match image_renderer.save_image("processing.jpg", Some((0, 0, 0))) {
                 Err(_) => {
                     eprintln!("Error saving image at line {}", lines_completed);
                 },
                 Ok(_) => {
-                    println!("Image saved successfully at line {}", lines_completed);
+                    let time_to_save = start.elapsed() - time_to_find_line;
+                    progress_bar.set_message(format!(
+                        "String {}: (score: {:.2}, find time: {:.2?}, save time: {:.2?})",
+                        lines_completed,
+                        score,
+                        time_to_find_line,
+                        time_to_save
+                    ));
+                    progress_bar.set_position(lines_completed as u64);
+                    start = Instant::now();
                 }
             }
         })
@@ -129,20 +133,22 @@ impl StringArtGenerator for GreedyGenerator {
         for iteration in 0..num_lines {
             match self.find_best_next_nail(current_nail, min_improvement_score) {
                 Some((best_next_nail, max_score)) => {
-                    consecutive_failures = 0;
-                    let mut state = self.state.write().unwrap();
-                    let start = state.nail_coords[current_nail];
-                    let end = state.nail_coords[best_next_nail];
-                    
-                    apply_line_darkness(&mut state.residual_image, start, end, line_darkness);
-                    
-                    current_nail = best_next_nail;
-                    state.path.push(current_nail);
-
+                    let recent_changes: Vec<usize>;
+                    {
+                        consecutive_failures = 0;
+                        let mut state = self.state.write().unwrap();
+                        let start = state.nail_coords[current_nail];
+                        let end = state.nail_coords[best_next_nail];
+                        
+                        apply_line_darkness(&mut state.residual_image, start, end, line_darkness);
+                        
+                        current_nail = best_next_nail;
+                        state.path.push(current_nail);
+                        recent_changes = state.path[state.path.len().saturating_sub(progress_frequency)..].to_vec();
+                    }
                     if iteration % progress_frequency == 0 || iteration == num_lines - 1 {
                         let lines_completed = iteration + 1;
-                        let recent_changes = &state.path[state.path.len().saturating_sub(progress_frequency)..];
-                        callback(lines_completed, num_lines, recent_changes, max_score);
+                        callback(lines_completed, num_lines, &recent_changes.clone(), max_score);
                     }
                 }
                 None => {
