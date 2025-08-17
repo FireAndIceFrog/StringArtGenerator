@@ -4,10 +4,12 @@
 //! from images using the greedy algorithm.
 
 use clap::{Arg, Command};
+use std::fs::File;
+use std::io::Write;
 use std::process;
 use string_art_rust_impl::{
-    fast_generator, high_quality_generator, quick_generator, GreedyGenerator, StringArtConfig,
-    StringArtGenerator, VERSION,
+    fast_generator, high_quality_generator, quick_generator, StringArtConfig, StringArtFactory,
+    StringArtGenerator, ImageRendererTrait, VERSION,
 };
 
 fn main() {
@@ -169,7 +171,7 @@ fn main() {
     let line_color = parse_color(matches.get_one::<String>("line-color").unwrap());
 
     // Create generator based on preset or custom configuration
-    let generator = if let Some(preset) = matches.get_one::<String>("preset") {
+    let factory_result = if let Some(preset) = matches.get_one::<String>("preset") {
         match preset.as_str() {
             "quick" => quick_generator(input_path),
             "fast" => fast_generator(input_path),
@@ -180,15 +182,13 @@ fn main() {
         // Custom configuration
         let nails = parse_or_exit::<usize>(matches.get_one::<String>("nails").unwrap(), "nails");
         let size = parse_or_exit::<usize>(matches.get_one::<String>("size").unwrap(), "size");
-
-        // Parse negative space parameters
         let negative_space_penalty = parse_or_exit::<f32>(
             matches.get_one::<String>("negative-space-penalty").unwrap(),
-            "negative-space-penalty"
+            "negative-space-penalty",
         );
         let negative_space_threshold = parse_or_exit::<f32>(
             matches.get_one::<String>("negative-space-threshold").unwrap(),
-            "negative-space-threshold"
+            "negative-space-threshold",
         );
 
         let config = StringArtConfig {
@@ -201,26 +201,11 @@ fn main() {
             negative_space_penalty,
             negative_space_threshold,
         };
-
-        if verbose {
-            println!("Configuration:");
-            println!("  Nails: {}", config.num_nails);
-            println!("  Canvas size: {}x{}", config.image_size, config.image_size);
-            println!("  Subject extraction: {}", config.extract_subject);
-            println!("  Shadow removal: {}", config.remove_shadows);
-            println!("  Eye protection: {}", config.preserve_eyes);
-            println!("  Negative space preservation: {}", config.preserve_negative_space);
-            if config.preserve_negative_space {
-                println!("    Penalty: {}", config.negative_space_penalty);
-                println!("    Threshold: {}", config.negative_space_threshold);
-            }
-        }
-
-        GreedyGenerator::new(input_path, config)
+        StringArtFactory::create_from_image(input_path, config)
     };
 
-    let mut generator = match generator {
-        Ok(gen) => gen,
+    let (mut generator, renderer, _) = match factory_result {
+        Ok(result) => result,
         Err(e) => {
             eprintln!("Error creating generator: {}", e);
             process::exit(1);
@@ -240,21 +225,21 @@ fn main() {
     println!("Starting string art generation...");
     let start_time = std::time::Instant::now();
 
-    match generator.generate_path(lines, darkness, min_score, save_every) {
+    match generator.generate_path(lines, darkness, min_score) {
         Ok(path) => {
             let duration = start_time.elapsed();
             println!("✓ Path generation completed in {:.2?}", duration);
             println!("✓ Generated {} lines", path.len().saturating_sub(1));
 
             // Save the rendered image
-            if let Err(e) = generator.render_image(output_path, line_color) {
+            if let Err(e) = renderer.save_image(output_path, line_color) {
                 eprintln!("Warning: Failed to save image: {}", e);
             } else {
                 println!("✓ Image saved to {}", output_path);
             }
 
             // Save the path
-            if let Err(e) = generator.save_path(path_output) {
+            if let Err(e) = save_path(&path, path_output) {
                 eprintln!("Warning: Failed to save path: {}", e);
             } else {
                 println!("✓ Path saved to {}", path_output);
@@ -267,6 +252,14 @@ fn main() {
             process::exit(1);
         }
     }
+}
+
+/// Save the path to a text file
+fn save_path(path: &[usize], output_path: &str) -> Result<(), std::io::Error> {
+    let mut file = File::create(output_path)?;
+    let path_str: Vec<String> = path.iter().map(|&n| n.to_string()).collect();
+    writeln!(file, "{}", path_str.join(","))?;
+    Ok(())
 }
 
 /// Parse a string to a numeric type or exit with an error message

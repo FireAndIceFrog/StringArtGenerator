@@ -3,14 +3,19 @@
 //! This module provides JavaScript-friendly interfaces for the string art
 //! generation algorithms, enabling real-time streaming of results to web applications.
 
-use crate::abstract_generator::{StringArtConfig, StringArtGenerator};
-use crate::greedy_generator::GreedyGenerator;
-use crate::utils::Coord;
 use crate::error::StringArtError;
+use crate::factories::generator_factory::StringArtFactory;
+use crate::generators::greedy::GreedyGenerator;
+use crate::image_processing::EyeRegion;
+use crate::rendering::image_renderer::ImageRenderer;
+use crate::state::{app_state::StringArtState, config::StringArtConfig};
+use crate::traits::generator::StringArtGenerator;
+use crate::utils::Coord;
+use js_sys::{Array, Function, Promise, Uint8Array};
 use serde::{Deserialize, Serialize};
+use std::sync::{Arc, RwLock};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
-use js_sys::{Array, Function, Promise, Uint8Array};
 use web_sys::console;
 
 // Set up panic hook for better debugging
@@ -126,9 +131,9 @@ pub struct ProgressInfo {
 #[wasm_bindgen]
 pub struct StringArtWasm {
     generator: Option<GreedyGenerator>,
+    renderer: Option<ImageRenderer>,
+    state: Arc<RwLock<StringArtState>>,
     config: WasmStringArtConfig,
-    nail_coords: Vec<Coord>,
-    current_path: Vec<usize>,
 }
 
 #[wasm_bindgen]
@@ -136,30 +141,29 @@ impl StringArtWasm {
     /// Create a new StringArtWasm instance from image data
     #[wasm_bindgen(constructor)]
     pub fn new(image_data: &Uint8Array, config: Option<WasmStringArtConfig>) -> Result<StringArtWasm, JsValue> {
-        let config = config.unwrap_or_else(WasmStringArtConfig::new);
-        
-        // Convert Uint8Array to Vec<u8>
+        let wasm_config = config.unwrap_or_else(WasmStringArtConfig::new);
+        let app_config: StringArtConfig = wasm_config.clone().into();
+
         let image_bytes: Vec<u8> = image_data.to_vec();
-        
-        // Create generator from image bytes
-        let generator = Self::create_generator_from_bytes(&image_bytes, &config)
-            .map_err(|e| JsValue::from_str(&format!("Failed to create generator: {}", e)))?;
-        
-        let nail_coords = generator.get_nail_coords().to_vec();
-        
+
+        let (generator, renderer, state) =
+            StringArtFactory::create_from_image_data(&image_bytes, app_config)
+                .map_err(|e| JsValue::from_str(&format!("Failed to create generator: {}", e)))?;
+
         Ok(StringArtWasm {
             generator: Some(generator),
-            config,
-            nail_coords,
-            current_path: Vec::new(),
+            renderer: Some(renderer),
+            state,
+            config: wasm_config,
         })
     }
 
     /// Get nail coordinates as a JavaScript array
     #[wasm_bindgen]
     pub fn get_nail_coordinates(&self) -> Array {
+        let state = self.state.read().unwrap();
         let coords_array = Array::new();
-        for coord in &self.nail_coords {
+        for coord in &state.nail_coords {
             let coord_obj = Array::new();
             coord_obj.push(&JsValue::from(coord.x));
             coord_obj.push(&JsValue::from(coord.y));
@@ -235,8 +239,9 @@ impl StringArtWasm {
     /// Get the current path as a JavaScript array
     #[wasm_bindgen]
     pub fn get_current_path(&self) -> Array {
+        let state = self.state.read().unwrap();
         let path_array = Array::new();
-        for nail in &self.current_path {
+        for nail in &state.path {
             path_array.push(&JsValue::from(*nail));
         }
         path_array
@@ -256,15 +261,6 @@ impl StringArtWasm {
 }
 
 impl StringArtWasm {
-    /// Create generator from image bytes
-    fn create_generator_from_bytes(
-        image_bytes: &[u8],
-        config: &WasmStringArtConfig,
-    ) -> std::result::Result<GreedyGenerator, StringArtError> {
-        // Use the new memory-based constructor
-        GreedyGenerator::from_image_data(image_bytes, config.clone().into())
-    }
-
     /// Generate path with real streaming updates (async)
     async fn generate_with_streaming(
         mut generator: GreedyGenerator,
