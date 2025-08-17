@@ -19,27 +19,15 @@ impl ImageRenderer {
     /// Draws a line on the image.
     fn draw_line(&self, img: &mut RgbImage, start: Coord, end: Coord, color: (u8, u8, u8)) {
         let (width, height) = img.dimensions();
-        let mut state = self.state.write().unwrap();
+        let pixels = crate::utils::get_line_pixels(start, end);
 
-        let start_idx = state.nail_coords.iter().position(|&c| c == start);
-        let end_idx = state.nail_coords.iter().position(|&c| c == end);
-
-        if let (Some(i), Some(j)) = (start_idx, end_idx) {
-            let key = (i, j);
-            if !state.line_pixel_cache.contains_key(&key) {
-                let computed = crate::utils::get_line_pixels(start, end);
-                state.line_pixel_cache.insert(key, computed);
-            }
-            let pixels = state.line_pixel_cache.get(&key).unwrap();
-
-            for pixel in pixels {
-                if pixel.x >= 0 && pixel.x < width as i32 && pixel.y >= 0 && pixel.y < height as i32 {
-                    img.put_pixel(
-                        pixel.x as u32,
-                        pixel.y as u32,
-                        Rgb([color.0, color.1, color.2]),
-                    );
-                }
+        for pixel in pixels {
+            if pixel.x >= 0 && pixel.x < width as i32 && pixel.y >= 0 && pixel.y < height as i32 {
+                img.put_pixel(
+                    pixel.x as u32,
+                    pixel.y as u32,
+                    Rgb([color.0, color.1, color.2]),
+                );
             }
         }
     }

@@ -1,7 +1,9 @@
 use crate::error::{Result, StringArtError};
 use crate::state::app_state::StringArtState;
 use crate::traits::StringArtGenerator;
-use crate::utils::{apply_line_darkness, calculate_line_score, calculate_line_score_with_negative_space};
+use crate::utils::{
+    apply_line_darkness_from_pixels, calculate_line_score_from_pixels,
+};
 use crate::{ImageRenderer, ImageRendererTrait};
 use indicatif::{ProgressBar, ProgressStyle};
 use rayon::prelude::*;
@@ -27,40 +29,28 @@ impl GreedyGenerator {
     ) -> Option<(usize, f32)> {
         let state = self.state.read().unwrap();
         let num_nails = state.config.num_nails;
-        let nail_coords = &state.nail_coords;
 
-        let scores: Vec<(usize, f32)> = (0..num_nails)
+        return (0..num_nails)
             .into_par_iter()
             .filter(|&next_nail| next_nail != current_nail)
             .map(|next_nail| {
-                let start = nail_coords[current_nail];
-                let end = nail_coords[next_nail];
+                let pixels = state.line_pixel_cache.get(current_nail, next_nail);
 
-                let score = if state.config.preserve_negative_space {
-                    calculate_line_score_with_negative_space(
-                        &state.residual_image,
-                        start,
-                        end,
-                        Some(&state.eye_protection_mask),
-                        Some(&state.negative_space_mask),
-                        state.config.negative_space_penalty,
-                    )
-                } else {
-                    calculate_line_score(
-                        &state.residual_image,
-                        start,
-                        end,
-                        Some(&state.eye_protection_mask),
-                    )
-                };
+                let score = calculate_line_score_from_pixels(
+                    &state.residual_image,
+                    pixels,
+                    Some(&state.eye_protection_mask),
+                    if state.config.preserve_negative_space {
+                        Some(&state.negative_space_mask)
+                    } else {
+                        None
+                    },
+                    state.config.negative_space_penalty,
+                );
                 (next_nail, score)
             })
-            .collect();
-
-        scores
-            .into_iter()
             .filter(|(_, score)| *score >= min_improvement_score)
-            .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
+            .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
     }
 }
 
@@ -137,11 +127,18 @@ impl StringArtGenerator for GreedyGenerator {
                     {
                         consecutive_failures = 0;
                         let mut state = self.state.write().unwrap();
-                        let start = state.nail_coords[current_nail];
-                        let end = state.nail_coords[best_next_nail];
-                        
-                        apply_line_darkness(&mut state.residual_image, start, end, line_darkness);
-                        
+                        let pixels = state
+                            .line_pixel_cache
+                            .get(current_nail, best_next_nail)
+                            .clone();
+
+                        let start_time = Instant::now();
+                        apply_line_darkness_from_pixels(
+                            &mut state.residual_image,
+                            &pixels,
+                            line_darkness,
+                        );
+                        print!("Time to apply line darkness: {:?}", start_time.elapsed());
                         current_nail = best_next_nail;
                         state.path.push(current_nail);
                         recent_changes = state.path[state.path.len().saturating_sub(progress_frequency)..].to_vec();

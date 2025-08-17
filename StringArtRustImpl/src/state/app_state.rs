@@ -1,12 +1,10 @@
 use crate::image_processing::EyeRegion;
 use crate::state::config::StringArtConfig;
-use crate::utils::Coord;
+use crate::utils::{Coord, LinePixelCache};
 use ndarray::Array2;
-use std::collections::HashMap;
 
 /// Holds the shared state for the string art generation process.
 /// This includes the images, masks, and the generated path.
-#[derive(Clone)]
 pub struct StringArtState {
     pub config: StringArtConfig,
     pub target_image: Array2<f32>,
@@ -16,7 +14,7 @@ pub struct StringArtState {
     pub eye_protection_mask: Array2<f32>,
     pub negative_space_mask: Array2<f32>,
     pub path: Vec<usize>,
-    pub line_pixel_cache: HashMap<(usize, usize), Vec<Coord>>,
+    pub line_pixel_cache: LinePixelCache,
 }
 
 impl StringArtState {
@@ -27,6 +25,7 @@ impl StringArtState {
         nail_coords: Vec<Coord>,
     ) -> Self {
         let image_size = config.image_size;
+        let line_pixel_cache = LinePixelCache::new(&nail_coords);
         Self {
             config,
             target_image,
@@ -36,7 +35,7 @@ impl StringArtState {
             eye_protection_mask: Array2::<f32>::ones((image_size, image_size)),
             negative_space_mask: Array2::<f32>::ones((image_size, image_size)),
             path: Vec::new(),
-            line_pixel_cache: HashMap::new(),
+            line_pixel_cache,
         }
     }
 }
