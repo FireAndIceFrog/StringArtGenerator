@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { ImageUploader } from './components/ImageUploader';
 import { StringArtCanvas } from './components/StringArtCanvas';
 import { useStringArt, type StringArtConfig, type ProgressInfo } from './hooks/useStringArt';
@@ -9,7 +9,7 @@ function App() {
   const [imageData, setImageData] = useState<Uint8Array | null>(null);
   const [imageUrl, setImageUrl] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const currentPathRef = useRef<number[]>([]);
+  const [currentPath, setCurrentPath] = useState<number[]>([]);
   const [nailCoords, setNailCoords] = useState<Array<[number, number]>>([]);
   const [progress, setProgress] = useState<ProgressInfo | null>(null);
   const [config, setConfig] = useState<StringArtConfig>(presets.balanced());
@@ -17,7 +17,7 @@ function App() {
   const handleImageSelected = useCallback((data: Uint8Array, url: string) => {
     setImageData(data);
     setImageUrl(url);
-    currentPathRef.current = [];
+    setCurrentPath([]);
     setProgress(null);
     setNailCoords([]); // Clear until we generate the string art
   }, []);
@@ -26,7 +26,7 @@ function App() {
     if (!imageData || !wasmModule) return;
 
     setIsGenerating(true);
-    currentPathRef.current = [];
+    setCurrentPath([]);
     setProgress(null);
 
     try {
@@ -34,7 +34,7 @@ function App() {
         setProgress(progressInfo);
         
         // Update the path in real-time
-        currentPathRef.current = [...currentPathRef.current, ...progressInfo.current_path];
+        setCurrentPath((prevPath) => [...prevPath, ...progressInfo.current_path]);
       };
 
       const onNailCoords = (coords: Array<[number, number]>) => {
@@ -43,7 +43,7 @@ function App() {
 
       const result = await generateStringArt(imageData, config, onProgress, onNailCoords);
       if (result.path) {
-        currentPathRef.current = result.path;
+        setCurrentPath(result.path);
       }
       if (result.nailCoords.length > 0) {
         setNailCoords(result.nailCoords);
@@ -160,7 +160,7 @@ function App() {
             width={500}
             height={500}
             nailCoords={nailCoords}
-            currentPathRef={currentPathRef}
+            currentPath={currentPath}
             isAnimating={isGenerating}
             imageUrl={imageUrl}
           />
