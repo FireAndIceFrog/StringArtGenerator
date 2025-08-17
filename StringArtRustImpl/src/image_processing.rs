@@ -1,6 +1,7 @@
 use crate::error::{Result, StringArtError};
 use image::{GrayImage, ImageBuffer, Luma};
 use ndarray::Array2;
+use rayon::iter::*;
 use std::collections::HashMap;
 
 #[cfg(feature = "opencv-support")]
@@ -410,41 +411,47 @@ fn detect_eyes_simple(img: &Array2<f32>) -> Result<Vec<EyeRegion>> {
     Ok(eye_regions)
 }
 
-/// Find dark circular regions that could be eyes
 fn find_dark_circular_regions(img: &Array2<f32>, search_height: usize, width: usize) -> Vec<EyeRegion> {
-    let mut regions = Vec::new();
-    
-    // Calculate average brightness to determine what's "dark"
-    let mut total_brightness = 0.0;
-    let mut pixel_count = 0;
-    
-    for y in 0..search_height {
-        for x in 0..width {
-            total_brightness += img[[y, x]];
-            pixel_count += 1;
-        }
-    }
-    
-    let avg_brightness = total_brightness / pixel_count as f32;
-    let dark_threshold = avg_brightness * 0.7; // 30% darker than average
-    
-    // Scan for potential eye centers
-    let step_size = 10; // Sample every 10 pixels for efficiency
-    
-    for y in step_size..search_height.saturating_sub(step_size) {
-        for x in step_size..width.saturating_sub(step_size) {
-            if img[[y, x]] < dark_threshold {
-                // Check if this could be the center of a dark circular region
-                if let Some(region) = validate_eye_region(img, x, y, dark_threshold, width, search_height) {
-                    // Check if this region doesn't overlap significantly with existing regions
-                    if !overlaps_significantly(&region, &regions) {
-                        regions.push(region);
-                    }
-                }
+    // Step 1: Compute average brightness in parallel
+    let (total_brightness, pixel_count) = (0..search_height)
+        .into_par_iter()
+        .map(|y| {
+            let mut sum = 0.0;
+            for x in 0..width {
+                sum += img[[y, x]];
             }
+            (sum, width)
+        })
+        .reduce(|| (0.0, 0), |(sum1, count1), (sum2, count2)| (sum1 + sum2, count1 + count2));
+
+    let avg_brightness = total_brightness / pixel_count as f32;
+    let dark_threshold = avg_brightness * 0.7;
+
+    // Step 2: Scan for dark circular regions in parallel
+    let step_size = 10;
+    let candidates: Vec<EyeRegion> = (step_size..search_height.saturating_sub(step_size))
+        .into_par_iter()
+        .flat_map(|y| {
+            (step_size..width.saturating_sub(step_size))
+                .filter_map(move |x| {
+                    if img[[y, x]] < dark_threshold {
+                        validate_eye_region(img, x, y, dark_threshold, width, search_height)
+                    } else {
+                        None
+                    }
+                })
+                .collect::<Vec<_>>() // collect per row to avoid lifetime issues
+        })
+        .collect();
+
+    // Step 3: Filter out overlapping regions sequentially
+    let mut regions = Vec::new();
+    for region in candidates {
+        if !overlaps_significantly(&region, &regions) {
+            regions.push(region);
         }
     }
-    
+
     regions
 }
 
