@@ -42,7 +42,7 @@ self.onmessage = async (event: MessageEvent<WorkerMessage>) => {
     const path = await generator.generate_path_streaming_with_frequency(
       2000, // max_lines
       50.0, // line_darkness
-      10.0, // min_improvement_score
+      15.0, // min_improvement_score
       300, // progress_frequency
       (progress: ProgressInfo) => {
         const { current_path } = progress;
