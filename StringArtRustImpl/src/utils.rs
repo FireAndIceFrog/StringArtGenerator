@@ -1,7 +1,6 @@
 use ndarray::Array2;
 use std::collections::HashMap;
 use std::f64::consts::PI;
-use std::time::Instant;
 use rayon::prelude::*;
 use std::sync::Mutex;
 

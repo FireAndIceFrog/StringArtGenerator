@@ -69,8 +69,8 @@ impl StringArtGenerator for GreedyGenerator {
                 .unwrap()
                 .progress_chars("##-"),
         );
-        let mut start = Instant::now();
         let image_renderer = ImageRenderer::new(self.state.clone());
+        let mut start = Instant::now();
         
         self.generate_path_with_callback(num_lines, line_darkness, min_improvement_score, progress_frequency, |lines_completed, _total_lines, _, score| {
             let time_to_find_line = start.elapsed();
@@ -132,13 +132,11 @@ impl StringArtGenerator for GreedyGenerator {
                             .get(current_nail, best_next_nail)
                             .clone();
 
-                        let start_time = Instant::now();
                         apply_line_darkness_from_pixels(
                             &mut state.residual_image,
                             &pixels,
                             line_darkness,
                         );
-                        print!("Time to apply line darkness: {:?}", start_time.elapsed());
                         current_nail = best_next_nail;
                         state.path.push(current_nail);
                         recent_changes = state.path[state.path.len().saturating_sub(progress_frequency)..].to_vec();
