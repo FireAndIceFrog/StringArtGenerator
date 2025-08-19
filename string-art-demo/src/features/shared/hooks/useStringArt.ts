@@ -4,14 +4,14 @@ import {
   useCallback,
   useRef,
 } from "react";
-import type { StringArtConfig } from "../interfaces/stringArtConfig";
+import type { StringArtConfig } from "../../../features/shared/interfaces/stringArtConfig";
 import init, {
   StringArtWasm,
   WasmStringArtConfig,
   test_wasm,
   get_version,
   ProgressInfo,
-} from "../wasm/string_art_rust_impl";
+} from "../../../wasm/string_art_rust_impl";
 
 interface WasmModule {
   StringArtWasm: typeof StringArtWasm;

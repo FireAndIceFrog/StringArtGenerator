@@ -1,4 +1,4 @@
-import type { WasmStringArtConfig } from "../wasm/string_art_rust_impl";
+import type { WasmStringArtConfig } from "../../../wasm/string_art_rust_impl";
 
 export type StringArtConfig = Pick<WasmStringArtConfig,  keyof {
   num_nails: number;

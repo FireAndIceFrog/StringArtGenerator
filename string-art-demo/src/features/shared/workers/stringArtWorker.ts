@@ -1,5 +1,5 @@
-import type { StringArtConfig } from '../interfaces/stringArtConfig.js';
-import init, { ProgressInfo, StringArtWasm, WasmStringArtConfig } from '../wasm/string_art_rust_impl.js';
+import type { StringArtConfig } from '../../../features/shared/interfaces/stringArtConfig.js';
+import init, { ProgressInfo, StringArtWasm, WasmStringArtConfig } from '../../../wasm/string_art_rust_impl.js';
 
 interface WorkerMessage {
   imageData: Uint8Array;

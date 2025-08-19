@@ -1,5 +1,5 @@
 import { useEffect, useState, type RefObject } from "react";
-import { type StringArtConfig } from "../../hooks/useStringArt";
+import { type StringArtConfig } from "../../../shared/hooks/useStringArt";
 
 const Slider = ({
   title,
