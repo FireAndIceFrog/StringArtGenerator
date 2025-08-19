@@ -1,5 +1,5 @@
 import { useEffect, useState, type RefObject } from "react";
-import { type StringArtConfig } from "./useStringArt";
+import { type StringArtConfig } from "../../useStringArt";
 
 const Slider = ({
   title,
