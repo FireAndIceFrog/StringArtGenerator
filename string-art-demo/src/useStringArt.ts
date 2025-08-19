@@ -12,6 +12,7 @@ import init, {
   get_version,
   ProgressInfo,
 } from "./wasm/string_art_rust_impl";
+import workerUrl from "./workers/stringArtWorker?url"
 
 interface WasmModule {
   StringArtWasm: typeof StringArtWasm;
@@ -74,10 +75,7 @@ export const useStringArt = () => {
 
   useEffect(() => {
     // Initialize the service worker
-    workerRef.current = new Worker(
-      new URL("../workers/stringArtWorker.ts", import.meta.url),
-      { type: "module" }
-    );
+    workerRef.current = new Worker(workerUrl, { type: "module" });
     return () => {
       workerRef.current?.terminate();
     };

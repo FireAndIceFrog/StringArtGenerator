@@ -4,7 +4,6 @@ import { StringArtCanvas } from './components/StringArtCanvas';
 import './App.css';
 import StringArtConfigSection from './components/StringArtConfig/StringArtConfigSection';
 import { useStringArt, type ProgressInfo } from './useStringArt';
-
 function App() {
   const [imageData, setImageData] = useState<Uint8Array | null>(null);
   const [imageUrl, setImageUrl] = useState<string>('');
@@ -42,7 +41,7 @@ function App() {
 
       const result = await generateStringArt(imageData, onProgress, onNailCoords);
       if (result.path) {
-        setCurrentPath(result.path);
+        setCurrentPath((prevPath) => [...prevPath, ...(result.path || [])]);
       }
       if (result.nailCoords.length > 0) {
         setNailCoords(result.nailCoords);
@@ -94,7 +93,7 @@ function App() {
           {imageData && (
             <div className="generation-controls">
               <StringArtConfigSection key={"stringArt"} settings={settings} />
-
+              
               <button 
                 onClick={handleStartGeneration}
                 disabled={isGenerating}
