@@ -1,19 +1,18 @@
 import { useState, useCallback } from 'react';
 import { ImageUploader } from './components/ImageUploader';
 import { StringArtCanvas } from './components/StringArtCanvas';
-import { useStringArt, type StringArtConfig, type ProgressInfo } from './hooks/useStringArt';
 import './App.css';
+import StringArtConfigSection from './components/StringArtConfig/StringArtConfigSection';
+import { useStringArt, type ProgressInfo } from './components/StringArtConfig/useStringArt';
 
 function App() {
-  const { wasmModule, isLoading, error, generateStringArt, presets } = useStringArt();
   const [imageData, setImageData] = useState<Uint8Array | null>(null);
   const [imageUrl, setImageUrl] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [currentPath, setCurrentPath] = useState<number[]>([]);
   const [nailCoords, setNailCoords] = useState<Array<[number, number]>>([]);
   const [progress, setProgress] = useState<ProgressInfo | null>(null);
-  const [config, setConfig] = useState<StringArtConfig>(presets.balanced());
-
+  const { generateStringArt, isLoading, error, settings } = useStringArt();
   const handleImageSelected = useCallback((data: Uint8Array, url: string) => {
     setImageData(data);
     setImageUrl(url);
@@ -22,8 +21,8 @@ function App() {
     setNailCoords([]); // Clear until we generate the string art
   }, []);
 
-  const handleStartGeneration = useCallback(async () => {
-    if (!imageData || !wasmModule) return;
+  const handleStartGeneration = async () => {
+    if (!imageData) return;
 
     setIsGenerating(true);
     setCurrentPath([]);
@@ -41,7 +40,7 @@ function App() {
         setNailCoords(coords);
       };
 
-      const result = await generateStringArt(imageData, config, onProgress, onNailCoords);
+      const result = await generateStringArt(imageData, onProgress, onNailCoords);
       if (result.path) {
         setCurrentPath(result.path);
       }
@@ -54,11 +53,7 @@ function App() {
     } finally {
       setIsGenerating(false);
     }
-  }, [imageData, wasmModule, config, generateStringArt]);
-
-  const handlePresetChange = useCallback((presetName: 'fast' | 'balanced' | 'highQuality') => {
-    setConfig(presets[presetName]());
-  }, [presets]);
+  };
 
   if (isLoading) {
     return (
@@ -98,32 +93,7 @@ function App() {
 
           {imageData && (
             <div className="generation-controls">
-              <div className="config-section">
-                <h3>Quality Presets</h3>
-                <div className="preset-buttons">
-                  <button 
-                    onClick={() => handlePresetChange('fast')}
-                    className={`preset-button ${config.num_nails === 360 ? 'active' : ''}`}
-                    disabled={isGenerating}
-                  >
-                    Fast (360 nails)
-                  </button>
-                  <button 
-                    onClick={() => handlePresetChange('balanced')}
-                    className={`preset-button ${config.num_nails === 720 ? 'active' : ''}`}
-                    disabled={isGenerating}
-                  >
-                    Balanced (720 nails)
-                  </button>
-                  <button 
-                    onClick={() => handlePresetChange('highQuality')}
-                    className={`preset-button ${config.num_nails === 1440 ? 'active' : ''}`}
-                    disabled={isGenerating}
-                  >
-                    High Quality (1440 nails)
-                  </button>
-                </div>
-              </div>
+              <StringArtConfigSection key={"stringArt"} settings={settings} />
 
               <button 
                 onClick={handleStartGeneration}
@@ -146,7 +116,6 @@ function App() {
                     ></div>
                   </div>
                   <div className="progress-details">
-                    <span>Current: Nail {progress.current_nail} → {progress.next_nail}</span>
                     <span>Score: {progress.score.toFixed(1)}</span>
                   </div>
                 </div>
