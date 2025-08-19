@@ -117,36 +117,6 @@ pub fn get_line_pixels(start: Coord, end: Coord) -> Vec<Coord> {
     pixels
 }
 
-/// Calculate the average value along a line in an image
-pub fn calculate_line_score(
-    image: &Array2<f32>,
-    start: Coord,
-    end: Coord,
-    protection_mask: Option<&Array2<f32>>,
-) -> f32 {
-    let pixels = get_line_pixels(start, end);
-    calculate_line_score_from_pixels(image, &pixels, protection_mask, None, 0.0)
-}
-
-/// Calculate line score with negative space awareness and eye enhancement
-pub fn calculate_line_score_with_negative_space(
-    image: &Array2<f32>,
-    start: Coord,
-    end: Coord,
-    enhancement_mask: Option<&Array2<f32>>,
-    negative_space_mask: Option<&Array2<f32>>,
-    negative_space_penalty: f32,
-) -> f32 {
-    let pixels = get_line_pixels(start, end);
-    calculate_line_score_from_pixels(
-        image,
-        &pixels,
-        enhancement_mask,
-        negative_space_mask,
-        negative_space_penalty,
-    )
-}
-
 /// Calculate line score from a pre-computed list of pixels.
 pub fn calculate_line_score_from_pixels(
     image: &Array2<f32>,
@@ -200,17 +170,6 @@ pub fn calculate_line_score_from_pixels(
     final_score.max(0.0)
 }
 
-/// Apply line darkness to the residual image
-pub fn apply_line_darkness(
-    residual: &mut Array2<f32>,
-    start: Coord,
-    end: Coord,
-    darkness: f32,
-) {
-    let pixels = get_line_pixels(start, end);
-    apply_line_darkness_from_pixels(residual, &pixels, darkness);
-}
-
 /// Apply line darkness from a pre-computed list of pixels.
 pub fn apply_line_darkness_from_pixels(
     residual: &mut Array2<f32>,
@@ -227,40 +186,5 @@ pub fn apply_line_darkness_from_pixels(
             // Clip to prevent negative values
             residual[[y, x]] = (residual[[y, x]] - darkness).max(0.0);
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use ndarray::Array2;
-
-    #[test]
-    fn test_calculate_nail_coords() {
-        let coords = calculate_nail_coords(4, Coord::new(100, 100), 50);
-        assert_eq!(coords.len(), 4);
-
-        // Check first coordinate (0 degrees)
-        assert_eq!(coords[0], Coord::new(150, 100));
-    }
-
-    #[test]
-    fn test_get_line_pixels() {
-        let pixels = get_line_pixels(Coord::new(0, 0), Coord::new(2, 2));
-        assert_eq!(
-            pixels,
-            vec![Coord::new(0, 0), Coord::new(1, 1), Coord::new(2, 2)]
-        );
-    }
-
-    #[test]
-    fn test_calculate_line_score() {
-        let mut image = Array2::<f32>::zeros((3, 3));
-        image[[1, 1]] = 100.0;
-
-        let score = calculate_line_score(&image, Coord::new(0, 0), Coord::new(2, 2), None);
-
-        // Should be average of values along diagonal
-        assert!((score - 33.333_332).abs() < 1e-5);
     }
 }

@@ -1,7 +1,6 @@
 use crate::error::{Result, StringArtError};
 use crate::state::app_state::StringArtState;
 use crate::traits::renderer::ImageRenderer as ImageRendererTrait;
-use crate::utils::Coord;
 use image::{ImageBuffer, Rgb, RgbImage};
 use std::sync::{Arc, RwLock};
 
@@ -17,9 +16,11 @@ impl ImageRenderer {
     }
 
     /// Draws a line on the image.
-    fn draw_line(&self, img: &mut RgbImage, start: Coord, end: Coord, color: (u8, u8, u8)) {
+    fn draw_line(&self, img: &mut RgbImage, start: usize, end: usize, color: (u8, u8, u8)) {
         let (width, height) = img.dimensions();
-        let pixels = crate::utils::get_line_pixels(start, end);
+
+        let pixel_cache = &self.state.read().unwrap().line_pixel_cache;
+        let pixels = pixel_cache.get(start, end);
 
         for pixel in pixels {
             if pixel.x >= 0 && pixel.x < width as i32 && pixel.y >= 0 && pixel.y < height as i32 {
@@ -37,7 +38,6 @@ impl ImageRendererTrait for ImageRenderer {
     fn render_to_image(&self, line_color: Option<(u8, u8, u8)>) -> Result<RgbImage> {
         let mut img;
         let color;
-        let nail_coords; 
         let path;
         {
             let state = match self.state.try_read() {
@@ -53,13 +53,10 @@ impl ImageRendererTrait for ImageRenderer {
                     reason: "No path to render".to_string(),
                 });
             }
-            nail_coords = state.nail_coords.clone();
             path = state.path.clone();
         }
         for window in path.windows(2) {
-            let start = nail_coords[window[0]];
-            let end = nail_coords[window[1]];
-            self.draw_line(&mut img, start, end, color);
+            self.draw_line(&mut img, window[0], window[1], color);
         }
 
         Ok(img)
