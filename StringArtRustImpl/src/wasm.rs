@@ -6,11 +6,8 @@
 use crate::error::StringArtError;
 use crate::factories::generator_factory::StringArtFactory;
 use crate::generators::greedy::GreedyGenerator;
-use crate::image_processing::EyeRegion;
-use crate::rendering::image_renderer::ImageRenderer;
 use crate::state::{app_state::StringArtState, config::StringArtConfig};
 use crate::traits::generator::StringArtGenerator;
-use crate::utils::Coord;
 use js_sys::{Array, Function, Promise, Uint8Array};
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, RwLock};
@@ -131,7 +128,6 @@ pub struct ProgressInfo {
 #[wasm_bindgen]
 pub struct StringArtWasm {
     generator: Option<GreedyGenerator>,
-    renderer: Option<ImageRenderer>,
     state: Arc<RwLock<StringArtState>>,
     config: WasmStringArtConfig,
 }
@@ -146,13 +142,12 @@ impl StringArtWasm {
 
         let image_bytes: Vec<u8> = image_data.to_vec();
 
-        let (generator, renderer, state) =
+        let (generator, _, state) =
             StringArtFactory::create_from_image_data(&image_bytes, app_config)
                 .map_err(|e| JsValue::from_str(&format!("Failed to create generator: {}", e)))?;
 
         Ok(StringArtWasm {
             generator: Some(generator),
-            renderer: Some(renderer),
             state,
             config: wasm_config,
         })
