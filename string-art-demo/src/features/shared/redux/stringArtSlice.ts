@@ -1,7 +1,8 @@
 // stringArtSlice.ts
 import { createAsyncThunk, createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { StringArtConfig } from '../interfaces/stringArtConfig';
-import type { ProgressInfo } from '../hooks/useStringArt';
+import { generateStringArt } from '../services/StringArtService';
+import type { ProgressInfo } from '../../../wasm/string_art_rust_impl';
 
 export interface StringArtState {
   imageData: Uint8Array | null;
@@ -15,12 +16,7 @@ export interface StringArtState {
   settings: StringArtConfig;
 }
 
-interface StrinArtThunkProperties { imageData: Uint8Array; settings: StringArtConfig; generateStringArt: (
-      imageData: Uint8Array,
-      onProgress: (progress: ProgressInfo) => void,
-      onNailCoords?: (coords: Array<[number, number]>) => void
-  ) => Promise<{ path: number[] | Uint32Array | null; nailCoords: Array<[number, number]> }>
-}
+interface StrinArtThunkProperties { imageData: Uint8Array; settings: StringArtConfig; }
 
 const initialState: StringArtState = {
   imageData: null,
@@ -32,7 +28,7 @@ const initialState: StringArtState = {
   isLoading: false,
   error: null,
   settings: {
-    num_nails: 500,
+    num_nails: 360,
     image_size: 500,
     extract_subject: false,
     remove_shadows: false,
@@ -40,8 +36,8 @@ const initialState: StringArtState = {
     preserve_negative_space: false,
     negative_space_penalty: 5,
     negative_space_threshold: 0.5,
-    max_lines: 1000,
-    line_darkness: 50,
+    max_lines: 2000,
+    line_darkness: 100,
     min_improvement_score: 15,
     progress_frequency: 300,
   },
@@ -51,10 +47,11 @@ const initialState: StringArtState = {
 export const generateStringArtThunk = createAsyncThunk(
   'stringArt/generate',
   async (
-    { imageData, generateStringArt }: StrinArtThunkProperties,
+    { imageData, settings }: StrinArtThunkProperties,
     {dispatch}
   ) => {
     return await generateStringArt(
+      settings,
       imageData,
       // Progress and nailCoords will be handled via events and dispatched separately if needed
       (progressInfo) => {
@@ -112,7 +109,7 @@ const stringArtSlice = createSlice({
         // result.path and result.nailCoords from thunk payload
         const result = action.payload;
         if (result.path) {
-          const pathArr = Array.isArray(result.path)
+          const pathArr: number[] = Array.isArray(result.path)
             ? result.path
             : Array.from(result.path);
           state.currentPath = [...state.currentPath, ...pathArr];

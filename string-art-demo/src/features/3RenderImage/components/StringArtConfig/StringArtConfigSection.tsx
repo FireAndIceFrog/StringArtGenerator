@@ -1,5 +1,5 @@
 import { useSelector, useDispatch } from "react-redux";
-import { type StringArtConfig } from "../../../shared/hooks/useStringArt";
+import { type StringArtConfig } from "../../../shared/services/StringArtService";
 import { setSettings } from "../../../shared/redux/stringArtSlice";
 
 const Slider = ({

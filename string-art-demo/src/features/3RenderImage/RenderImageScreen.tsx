@@ -1,5 +1,4 @@
 import { useDispatch, useSelector } from "react-redux";
-import { useStringArt } from "../shared/hooks/useStringArt";
 import type { AppDispatch } from "../shared/redux/store";
 import { generateStringArtThunk, type StringArtState } from "../shared/redux/stringArtSlice";
 import StringArtConfigSection from "./components/StringArtConfig/StringArtConfigSection";
@@ -13,11 +12,10 @@ export default function RenderImageScreen() {
     settings,
   } = useSelector((state: { stringArt: StringArtState }) => state.stringArt);
 
-  const { generateStringArt } = useStringArt();
   const handleStartGeneration = () => {
     if (!imageData) return;
     dispatch(
-      generateStringArtThunk({ imageData, settings, generateStringArt })
+      generateStringArtThunk({ imageData, settings })
     );
   };
 
