@@ -4,15 +4,14 @@ import {
   useCallback,
   useRef,
 } from "react";
-import type { StringArtConfig } from "./interfaces/stringArtConfig";
+import type { StringArtConfig } from "../interfaces/stringArtConfig";
 import init, {
   StringArtWasm,
   WasmStringArtConfig,
   test_wasm,
   get_version,
   ProgressInfo,
-} from "./wasm/string_art_rust_impl";
-import workerUrl from "./workers/stringArtWorker?url"
+} from "../wasm/string_art_rust_impl";
 
 interface WasmModule {
   StringArtWasm: typeof StringArtWasm;
@@ -75,7 +74,7 @@ export const useStringArt = () => {
 
   useEffect(() => {
     // Initialize the service worker
-    workerRef.current = new Worker(new URL(workerUrl, import.meta.url), { type: "module" });
+    workerRef.current = new Worker(new URL('../workers/stringArtWorker.ts', import.meta.url), { type: "module" });
     return () => {
       workerRef.current?.terminate();
     };

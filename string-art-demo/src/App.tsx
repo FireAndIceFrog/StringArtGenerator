@@ -3,7 +3,7 @@ import { ImageUploader } from './components/ImageUploader';
 import { StringArtCanvas } from './components/StringArtCanvas';
 import './App.css';
 import StringArtConfigSection from './components/StringArtConfig/StringArtConfigSection';
-import { useStringArt, type ProgressInfo } from './useStringArt';
+import { useStringArt, type ProgressInfo } from './hooks/useStringArt';
 function App() {
   const [imageData, setImageData] = useState<Uint8Array | null>(null);
   const [imageUrl, setImageUrl] = useState<string>('');
