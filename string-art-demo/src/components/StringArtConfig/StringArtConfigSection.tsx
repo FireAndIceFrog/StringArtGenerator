@@ -18,22 +18,22 @@ const Slider = ({
       | "preserve_eyes"
       | "preserve_negative_space"
     >,
-    [number, number, number]
+    [number, number, number, number]
   > = {
     //min, max, start
-    image_size: [500, 2000, 500],
-    line_darkness: [25, 300, 100],
-    max_lines: [800, 5000, 1000],
-    min_improvement_score: [0, 100, 15],
-    negative_space_penalty: [0, 100, 0],
-    negative_space_threshold: [0, 100, 0],
-    num_nails: [360, 1440, 360],
-    progress_frequency: [200, 500, 200],
+    image_size: [500, 2000, 500, 100],
+    line_darkness: [25, 300, 100, 5],
+    max_lines: [800, 5000, 1000, 100],
+    min_improvement_score: [0, 100, 15, 1],
+    negative_space_penalty: [0, 100, 0, 1],
+    negative_space_threshold: [0, 100, 0, 1],
+    num_nails: [360, 1440, 360, 360/4],
+    progress_frequency: [200, 500, 200, 50],
   };
 
   const [val, setVal] = useState("0");
   const dontRender = !index || !Object.keys(minMaxVals).includes(index as string)
-  const [min, max, start] = dontRender? [0,0,0] : minMaxVals[index as keyof typeof minMaxVals];
+  const [min, max, start, step] = dontRender? [0,0,0,0] : minMaxVals[index as keyof typeof minMaxVals];
 
   useEffect(() => {
     setVal(String(start))
@@ -50,6 +50,7 @@ const Slider = ({
         name="volume"
         min={min}
         max={max}
+        step={step}
         onChange={({ target }) => {
           (settingsRef.current[index] as unknown) = target.value;
           setVal(target.value);
