@@ -1,6 +1,7 @@
 use crate::image_processing::EyeRegion;
 use crate::state::config::StringArtConfig;
-use crate::utils::{Coord, LinePixelCache};
+use crate::state::cache::BasicLinePixelCache;
+use crate::utils::{ Coord };
 use ndarray::Array2;
 
 /// Holds the shared state for the string art generation process.
@@ -14,7 +15,7 @@ pub struct StringArtState {
     pub eye_protection_mask: Array2<f32>,
     pub negative_space_mask: Array2<f32>,
     pub path: Vec<usize>,
-    pub line_pixel_cache: LinePixelCache,
+    pub line_pixel_cache: BasicLinePixelCache,
 }
 
 impl StringArtState {
@@ -25,7 +26,7 @@ impl StringArtState {
         nail_coords: Vec<Coord>,
     ) -> Self {
         let image_size = config.image_size;
-        let line_pixel_cache = LinePixelCache::new(&nail_coords);
+        let line_pixel_cache = BasicLinePixelCache::new(&nail_coords);
         Self {
             config,
             target_image,

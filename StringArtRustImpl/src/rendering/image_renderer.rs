@@ -1,6 +1,7 @@
 use crate::error::{Result, StringArtError};
 use crate::state::app_state::StringArtState;
 use crate::traits::renderer::ImageRenderer as ImageRendererTrait;
+use crate::traits::LinePixelCache;
 use image::{ImageBuffer, Rgb, RgbImage};
 use std::sync::{Arc, RwLock};
 
