@@ -75,7 +75,7 @@ export const useStringArt = () => {
 
   useEffect(() => {
     // Initialize the service worker
-    workerRef.current = new Worker(workerUrl, { type: "module" });
+    workerRef.current = new Worker(new URL(workerUrl, import.meta.url), { type: "module" });
     return () => {
       workerRef.current?.terminate();
     };
