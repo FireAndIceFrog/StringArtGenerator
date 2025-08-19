@@ -1,10 +1,11 @@
 .app {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 1rem;
+  width: 100vw;
+  background: linear-gradient(0deg, #8f91ff 0%, #7476ff 100%);
 }
 
 .app-header {
+  padding-top: 1rem;
   text-align: center;
   color: white;
   margin-bottom: 2rem;
@@ -47,6 +48,8 @@
   background: white;
   border-radius: 8px;
   padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
@@ -89,6 +92,7 @@
 }
 
 .generate-button {
+  margin-top: 15px;
   width: 100%;
   padding: 1rem;
   background: #28a745;

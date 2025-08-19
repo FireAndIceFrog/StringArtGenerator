@@ -1,23 +1,13 @@
-import init, { StringArtWasm, WasmStringArtConfig } from '../wasm/string_art_rust_impl.js';
+import type { StringArtConfig } from '../interfaces/stringArtConfig.js';
+import init, { ProgressInfo, StringArtWasm, WasmStringArtConfig } from '../wasm/string_art_rust_impl.js';
 
 interface WorkerMessage {
   imageData: Uint8Array;
-  config: WasmStringArtConfig;
-}
-
-interface ProgressInfo {
-  lines_completed: number;
-  total_lines: number;
-  current_nail: number;
-  next_nail: number;
-  score: number;
-  completion_percent: number;
-  path_segment: [number, number];
-  current_path: number[];
+  config: StringArtConfig;
 }
 
 self.onmessage = async (event: MessageEvent<WorkerMessage>) => {
-  const { imageData, config } = event.data;
+  const { imageData, config } = event.data as { imageData: Uint8Array, config: StringArtConfig};
 
   try {
     // Initialize the WASM module
@@ -40,10 +30,10 @@ self.onmessage = async (event: MessageEvent<WorkerMessage>) => {
 
     // Generate the string art path with progress updates
     const path = await generator.generate_path_streaming_with_frequency(
-      2000, // max_lines
-      50.0, // line_darkness
-      15.0, // min_improvement_score
-      300, // progress_frequency
+      config.max_lines, // max_lines
+      config.line_darkness, // line_darkness
+      config.min_improvement_score, // min_improvement_score
+      config.progress_frequency, // progress_frequency
       (progress: ProgressInfo) => {
         const { current_path } = progress;
         self.postMessage({ type: 'progress', data: { ...progress, current_path } });
