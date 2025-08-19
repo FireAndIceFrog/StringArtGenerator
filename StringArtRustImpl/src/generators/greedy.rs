@@ -1,6 +1,6 @@
 use crate::error::{Result, StringArtError};
 use crate::state::app_state::StringArtState;
-use crate::traits::StringArtGenerator;
+use crate::traits::{LinePixelCache, StringArtGenerator};
 use crate::utils::{
     apply_line_darkness_from_pixels, calculate_line_score_from_pixels,
 };
