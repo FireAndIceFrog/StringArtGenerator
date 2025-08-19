@@ -18,7 +18,6 @@ export default defineConfig({
   },
   optimizeDeps: {
     exclude: ['string-art-wasm'],
-    include: ['/src/features/shared/workers/*'],
     esbuildOptions: {
       plugins: [
         NodeGlobalsPolyfillPlugin({

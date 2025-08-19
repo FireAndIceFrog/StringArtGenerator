@@ -1,14 +1,17 @@
-import { useEffect, useState, type RefObject } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import { type StringArtConfig } from "../../../shared/hooks/useStringArt";
+import { setSettings } from "../../../shared/redux/stringArtSlice";
 
 const Slider = ({
   title,
-  settingsRef,
   index,
+  value,
+  settings,
 }: {
   title: string;
-  settingsRef: RefObject<StringArtConfig>;
   index: keyof StringArtConfig;
+  value: string | number;
+  settings: StringArtConfig;
 }) => {
   const minMaxVals: Record<
     keyof Omit<
@@ -18,71 +21,62 @@ const Slider = ({
       | "preserve_eyes"
       | "preserve_negative_space"
     >,
-    [number, number, number, number]
+    [number, number, number]
   > = {
-    //min, max, start
-    image_size: [500, 2000, 500, 100],
-    line_darkness: [25, 300, 100, 5],
-    max_lines: [800, 5000, 1000, 100],
-    min_improvement_score: [0, 100, 15, 1],
-    negative_space_penalty: [0, 100, 0, 1],
-    negative_space_threshold: [0, 100, 0, 1],
-    num_nails: [360, 1440, 360, 360/4],
-    progress_frequency: [200, 500, 200, 50],
+    //min, max, step
+    image_size: [500, 2000, 100],
+    line_darkness: [25, 300, 5],
+    max_lines: [800, 5000, 100],
+    min_improvement_score: [0, 100, 1],
+    negative_space_penalty: [0, 100, 1],
+    negative_space_threshold: [0, 100, 1],
+    num_nails: [360, 1440, 360/4],
+    progress_frequency: [200, 500, 50],
   };
 
-  const [val, setVal] = useState("0");
+  const dispatch = useDispatch();
   const dontRender = !index || !Object.keys(minMaxVals).includes(index as string)
-  const [min, max, start, step] = dontRender? [0,0,0,0] : minMaxVals[index as keyof typeof minMaxVals];
-
-  useEffect(() => {
-    setVal(String(start))
-  }, [start])
+  const [min, max, step] = dontRender? [0,0,0] : minMaxVals[index as keyof typeof minMaxVals];
 
   if (dontRender) return null;
-  if (!settingsRef?.current) return null;
   return (
     <div key={index}>
       <input
-        defaultValue={start}
+        value={value}
         type="range"
-        id="volume"
-        name="volume"
+        id={`slider-${index}`}
+        name={title}
         min={min}
         max={max}
         step={step}
         onChange={({ target }) => {
-          (settingsRef.current[index] as unknown) = target.value;
-          setVal(target.value);
+          dispatch(setSettings({ ...settings, [index]: Number(target.value) }));
         }}
       />
-      <label htmlFor="volume">{title} ({val})</label>
+      <label htmlFor={`slider-${index}`}>{title} ({value})</label>
     </div>
   );
 };
 
-const StringArtConfigSection = ({
-  settings,
-}: {
-  settings: RefObject<StringArtConfig>;
-}) => {
-  if (!settings.current) {
+const StringArtConfigSection = () => {
+  const settings = useSelector((state: { stringArt: { settings: StringArtConfig } }) => state.stringArt.settings);
+
+  if (!settings) {
     return null;
   }
   return (
     <section>
       <h2>String Art Configuration</h2>
-      {(Object.keys(settings.current) as (keyof StringArtConfig)[]).map(
-        (key) => {
-          return (
-            <Slider
-              key={key}
-              index={key}
-              title={key.split("_").join(" ")}
-              settingsRef={settings}
-            />
-          );
-        }
+      {(Object.keys(settings) as (keyof StringArtConfig)[]).map((key) =>
+        (
+          <Slider
+            key={key}
+            index={key}
+            title={key.split("_").join(" ")}
+            value={settings[key] as unknown as string | number}
+            settings={settings}
+          />
+        )
       )}
     </section>
   );

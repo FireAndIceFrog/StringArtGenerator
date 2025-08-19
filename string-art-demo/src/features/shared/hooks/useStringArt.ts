@@ -1,75 +1,17 @@
 import {
-  useState,
   useEffect,
   useCallback,
   useRef,
 } from "react";
+import { useSelector } from "react-redux";
+import type { RootState } from "../redux/store";
 import type { StringArtConfig } from "../../../features/shared/interfaces/stringArtConfig";
-import init, {
-  StringArtWasm,
-  WasmStringArtConfig,
-  test_wasm,
-  get_version,
-  ProgressInfo,
-} from "../../../wasm/string_art_rust_impl";
-
-interface WasmModule {
-  StringArtWasm: typeof StringArtWasm;
-  WasmStringArtConfig: typeof WasmStringArtConfig;
-  test_wasm: typeof test_wasm;
-  get_version: typeof get_version;
-}
+import { ProgressInfo } from "../../../wasm/string_art_rust_impl";
 
 export const useStringArt = () => {
-  const [, setWasmModule] = useState<WasmModule | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const settings = useRef({
-    num_nails: 500,
-    image_size: 500,
-    extract_subject: false,
-    remove_shadows: false,
-    preserve_eyes: true,
-    preserve_negative_space: false,
-    negative_space_penalty: 5,
-    negative_space_threshold: 0.5,
-    max_lines: 1000,
-    line_darkness: 50,
-    min_improvement_score: 15,
-    progress_frequency: 300,
-  } as StringArtConfig);
-
-  useEffect(() => {
-    const loadWasm = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        // Initialize the WASM module
-        await init();
-
-        // Create the WASM interface
-        const wasmInterface: WasmModule = {
-          StringArtWasm,
-          WasmStringArtConfig,
-          test_wasm,
-          get_version,
-        };
-
-        setWasmModule(wasmInterface);
-        console.log("WASM module loaded successfully:", test_wasm());
-      } catch (err) {
-        console.error("Failed to load WASM module:", err);
-        setError(
-          err instanceof Error ? err.message : "Failed to load WASM module"
-        );
-      }
-      setTimeout(() => setIsLoading(false), 1000);
-    };
-
-    loadWasm();
-  }, [setIsLoading, setError, setWasmModule]);
-
+  const isLoading = useSelector((state: RootState) => state.stringArt.isLoading);
+  const error = useSelector((state: RootState) => state.stringArt.error);
+  const settings = useSelector((state: RootState) => state.stringArt.settings);
   const workerRef = useRef<Worker | null>(null);
 
   useEffect(() => {
@@ -110,8 +52,7 @@ export const useStringArt = () => {
 
         workerRef.current!.postMessage({
           imageData,
-          config: settings.current,
-          wasmModuleUrl: "../wasm/string_art_rust_impl.js",
+          config: settings,
         });
       });
     },

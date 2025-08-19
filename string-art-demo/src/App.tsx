@@ -1,58 +1,18 @@
-import { useState, useCallback } from 'react';
-import { ImageUploader } from './features/1Upload/components/ImageUploader';
-import { StringArtCanvas } from './features/3RenderImage/components/StringArtCanvas';
+import { useSelector } from 'react-redux';
 import './App.css';
-import StringArtConfigSection from './features/3RenderImage/components/StringArtConfig/StringArtConfigSection';
-import { useStringArt, type ProgressInfo } from './features/shared/hooks/useStringArt';
+import {
+  type StringArtState
+} from './features/shared/redux/stringArtSlice';
+import UploadScreen from './features/1Upload/UploadScreen';
+import RenderImageScreen from './features/3RenderImage/RenderImageScreen';
+import CanvasScreen from './features/3RenderImage/CanvasScreen';
+
 function App() {
-  const [imageData, setImageData] = useState<Uint8Array | null>(null);
-  const [imageUrl, setImageUrl] = useState<string>('');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [currentPath, setCurrentPath] = useState<number[]>([]);
-  const [nailCoords, setNailCoords] = useState<Array<[number, number]>>([]);
-  const [progress, setProgress] = useState<ProgressInfo | null>(null);
-  const { generateStringArt, isLoading, error, settings } = useStringArt();
-  const handleImageSelected = useCallback((data: Uint8Array, url: string) => {
-    setImageData(data);
-    setImageUrl(url);
-    setCurrentPath([]);
-    setProgress(null);
-    setNailCoords([]); // Clear until we generate the string art
-  }, []);
-
-  const handleStartGeneration = async () => {
-    if (!imageData) return;
-
-    setIsGenerating(true);
-    setCurrentPath([]);
-    setProgress(null);
-
-    try {
-      const onProgress = (progressInfo: ProgressInfo) => {
-        setProgress(progressInfo);
-        
-        // Update the path in real-time
-        setCurrentPath((prevPath) => [...prevPath, ...progressInfo.current_path]);
-      };
-
-      const onNailCoords = (coords: Array<[number, number]>) => {
-        setNailCoords(coords);
-      };
-
-      const result = await generateStringArt(imageData, onProgress, onNailCoords);
-      if (result.path) {
-        setCurrentPath((prevPath) => [...prevPath, ...(result.path || [])]);
-      }
-      if (result.nailCoords.length > 0) {
-        setNailCoords(result.nailCoords);
-      }
-    } catch (err) {
-      console.error('Generation failed:', err);
-      alert('String art generation failed. Please try again.');
-    } finally {
-      setIsGenerating(false);
-    }
-  };
+  const {
+    imageData,
+    isLoading,
+    error,
+  } = useSelector((state: { stringArt: StringArtState }) => state.stringArt);
 
   if (isLoading) {
     return (
@@ -83,56 +43,14 @@ function App() {
 
       <main className="app-main">
         <div className="controls-section">
-          <div className="upload-section">
-            <ImageUploader 
-              onImageSelected={handleImageSelected}
-              disabled={isGenerating}
-            />
-          </div>
+          <UploadScreen/>
 
           {imageData && (
-            <div className="generation-controls">
-              <StringArtConfigSection key={"stringArt"} settings={settings} />
-              
-              <button 
-                onClick={handleStartGeneration}
-                disabled={isGenerating}
-                className="generate-button"
-              >
-                {isGenerating ? 'Generating...' : 'Generate String Art'}
-              </button>
-
-              {progress && (
-                <div className="progress-section">
-                  <div className="progress-header">
-                    <span>Progress: {progress.completion_percent.toFixed(1)}%</span>
-                    <span>Lines: {progress.lines_completed}/{progress.total_lines}</span>
-                  </div>
-                  <div className="progress-bar">
-                    <div 
-                      className="progress-fill"
-                      style={{ width: `${progress.completion_percent}%` }}
-                    ></div>
-                  </div>
-                  <div className="progress-details">
-                    <span>Score: {progress.score.toFixed(1)}</span>
-                  </div>
-                </div>
-              )}
-            </div>
+            <RenderImageScreen/>
           )}
         </div>
 
-        <div className="canvas-section">
-          <StringArtCanvas 
-            width={500}
-            height={500}
-            nailCoords={nailCoords}
-            currentPath={currentPath}
-            isAnimating={isGenerating}
-            imageUrl={imageUrl}
-          />
-        </div>
+        <CanvasScreen/>
       </main>
     </div>
   );
