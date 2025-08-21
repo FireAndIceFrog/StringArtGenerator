@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, forwardRef, useImperativeHandle } from 'react';
 import style from './style.module.css'
 import type { StringArtState } from '../../../shared/redux/stringArtSlice';
 import { useSelector } from 'react-redux';
@@ -8,18 +8,20 @@ interface StringArtCanvasProps {
   height: number;
 }
 
-export const StringArtCanvas: React.FC<StringArtCanvasProps> = ({
+export const StringArtCanvas = forwardRef<HTMLCanvasElement, StringArtCanvasProps>(({
   width,
   height,
-}) => {
+}, ref) => {
   const { imageUrl, isGenerating: isAnimating, currentPath, nailCoords } = useSelector(
     (state: { stringArt: StringArtState }) => state.stringArt
   );
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasInternalRef = useRef<HTMLCanvasElement>(null);
   const [showOriginal, setShowOriginal] = useState(false);
 
+  useImperativeHandle(ref, () => canvasInternalRef.current as HTMLCanvasElement);
+
   useEffect(() => {
-    const canvas = canvasRef.current;
+    const canvas = canvasInternalRef.current;
     if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
@@ -103,18 +105,12 @@ export const StringArtCanvas: React.FC<StringArtCanvasProps> = ({
       
       <div className="canvas-wrapper">
         <canvas
-          ref={canvasRef}
+          ref={canvasInternalRef}
           width={width}
           height={height}
           className={`${style['string-art-canvas']} ${isAnimating ? style['animating'] : ''}`}
         />
-        
-        {isAnimating && (
-          <div className={style['animation-overlay']}>
-            <div className={style['pulse']}>🎨</div>
-          </div>
-        )}
       </div>
     </div>
   );
-};
+});

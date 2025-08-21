@@ -1,14 +1,17 @@
 import { useSelector } from 'react-redux';
 import './App.css';
+import StepperScreen from './features/Stepper/StepperScreen';
 import {
   type StringArtState
 } from './features/shared/redux/stringArtSlice';
-import RenderImageScreen from './features/3RenderImage/RenderImageScreen';
+import { ThemeProvider } from '@mui/material/styles';
+import theme from './theme';
 
 function App() {
   const {
     isLoading,
     error,
+    isGenerating,
   } = useSelector((state: { stringArt: StringArtState }) => state.stringArt);
 
   if (isLoading) {
@@ -32,14 +35,16 @@ function App() {
   }
 
   return (
-    <div className="app">
-      <header className="app-header">
-        <h1>🎨 String Art Generator</h1>
-        <p>Upload an image and watch it transform into beautiful string art in real-time!</p>
-      </header>
+    <ThemeProvider theme={theme}>
+      <div className="app">
+        <header className="app-header">
+          <h1>{'String Art Generator'}</h1>
+          <p>Upload an image and watch it transform into beautiful string art in real-time!</p>
+        </header>
 
-      <RenderImageScreen/>
-    </div>
+        <StepperScreen />
+      </div>
+    </ThemeProvider>
   );
 }
 

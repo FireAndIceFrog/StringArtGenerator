@@ -1,3 +1,4 @@
+import React, { useRef, forwardRef, useImperativeHandle } from 'react';
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch } from "../shared/redux/store";
 import {
@@ -5,14 +6,21 @@ import {
   type StringArtState,
 } from "../shared/redux/stringArtSlice";
 import StringArtConfigSection from "./components/StringArtConfig/StringArtConfigSection";
-import UploadScreen from "../1Upload/UploadScreen";
 import { StringArtCanvas } from "./components/StringArtCanvas/StringArtCanvas";
 
-export default function RenderImageScreen() {
+interface RenderImageScreenProps {
+  onDownloadImage?: () => void;
+}
+
+const RenderImageScreen = forwardRef<HTMLCanvasElement, RenderImageScreenProps>(({ onDownloadImage }, ref) => {
   const dispatch = useDispatch<AppDispatch>();
   const { imageData, isGenerating, progress, settings } = useSelector(
     (state: { stringArt: StringArtState }) => state.stringArt
   );
+
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useImperativeHandle(ref, () => canvasRef.current as HTMLCanvasElement);
 
   const handleStartGeneration = () => {
     if (!imageData) return;
@@ -22,8 +30,6 @@ export default function RenderImageScreen() {
   return (
     <main className="app-main">
       <div className="controls-section">
-        <UploadScreen />
-
         {imageData && (
           <div className="generation-controls">
             <StringArtConfigSection key={"stringArt"} />
@@ -63,10 +69,13 @@ export default function RenderImageScreen() {
 
       <div className="canvas-section">
             <StringArtCanvas
+              ref={canvasRef}
               width={500}
               height={500}
             />
           </div>
     </main>
   );
-}
+});
+
+export default RenderImageScreen;

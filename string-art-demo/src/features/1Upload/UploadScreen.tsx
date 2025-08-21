@@ -4,7 +4,11 @@ import type { AppDispatch } from "../shared/redux/store";
 import { type StringArtState, resetState, setImageData, setImageUrl } from "../shared/redux/stringArtSlice";
 import { ImageUploader } from "./components/ImageUploader";
 
-export default function UploadScreen() {
+interface UploadScreenProps {
+  onImageSelected?: () => void;
+}
+
+export default function UploadScreen({ onImageSelected }: UploadScreenProps) {
   const dispatch = useDispatch<AppDispatch>();
   const {
     isGenerating
@@ -15,8 +19,11 @@ export default function UploadScreen() {
       dispatch(resetState());
       dispatch(setImageData(data));
       dispatch(setImageUrl(url));
+      if (onImageSelected) {
+        onImageSelected();
+      }
     },
-    [dispatch]
+    [dispatch, onImageSelected]
   );
 
   return (

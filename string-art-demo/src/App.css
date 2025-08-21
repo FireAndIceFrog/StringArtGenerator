@@ -1,14 +1,21 @@
 .app {
   min-height: 100vh;
   width: 100vw;
-  background: linear-gradient(0deg, #8f91ff 0%, #7476ff 100%);
+  background-color: #F8F8F8; /* Use a solid background color from the theme */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .app-header {
   padding-top: 1rem;
+  padding-bottom: 5px;
   text-align: center;
   color: white;
   margin-bottom: 2rem;
+  background-color: #5E35B1; /* Use primary color from theme */
+  width: 100%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .app-header h1 {
@@ -165,15 +172,15 @@
   justify-content: center;
   min-height: 100vh;
   text-align: center;
-  color: white;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #212121; /* Use primary text color from theme */
+  background-color: #F8F8F8; /* Use default background color from theme */
 }
 
 .loading-spinner {
   width: 50px;
   height: 50px;
-  border: 5px solid rgba(255, 255, 255, 0.3);
-  border-top: 5px solid white;
+  border: 5px solid rgba(0, 0, 0, 0.1); /* Lighter border for spinner */
+  border-top: 5px solid #5E35B1; /* Primary color for spinner top */
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 1rem;
@@ -187,7 +194,7 @@
 .app-error button {
   margin-top: 1rem;
   padding: 0.75rem 1.5rem;
-  background: #007bff;
+  background: #D32F2F; /* Error color from theme */
   color: white;
   border: none;
   border-radius: 4px;
@@ -196,7 +203,7 @@
 }
 
 .app-error button:hover {
-  background: #0056b3;
+  background: #C62828; /* Darker error color on hover */
 }
 
 @media (max-width: 768px) {
