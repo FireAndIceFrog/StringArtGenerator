@@ -3,13 +3,10 @@ import './App.css';
 import {
   type StringArtState
 } from './features/shared/redux/stringArtSlice';
-import UploadScreen from './features/1Upload/UploadScreen';
 import RenderImageScreen from './features/3RenderImage/RenderImageScreen';
-import CanvasScreen from './features/3RenderImage/CanvasScreen';
 
 function App() {
   const {
-    imageData,
     isLoading,
     error,
   } = useSelector((state: { stringArt: StringArtState }) => state.stringArt);
@@ -41,17 +38,7 @@ function App() {
         <p>Upload an image and watch it transform into beautiful string art in real-time!</p>
       </header>
 
-      <main className="app-main">
-        <div className="controls-section">
-          <UploadScreen/>
-
-          {imageData && (
-            <RenderImageScreen/>
-          )}
-        </div>
-
-        <CanvasScreen/>
-      </main>
+      <RenderImageScreen/>
     </div>
   );
 }

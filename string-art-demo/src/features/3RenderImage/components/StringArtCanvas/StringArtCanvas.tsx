@@ -1,23 +1,20 @@
 import React, { useRef, useEffect, useState } from 'react';
 import style from './style.module.css'
+import type { StringArtState } from '../../../shared/redux/stringArtSlice';
+import { useSelector } from 'react-redux';
 
 interface StringArtCanvasProps {
   width: number;
   height: number;
-  nailCoords: Array<[number, number]>;
-  currentPath: number[];
-  isAnimating: boolean;
-  imageUrl?: string;
 }
 
 export const StringArtCanvas: React.FC<StringArtCanvasProps> = ({
   width,
   height,
-  nailCoords,
-  currentPath,
-  isAnimating,
-  imageUrl
 }) => {
+  const { imageUrl, isGenerating: isAnimating, currentPath, nailCoords } = useSelector(
+    (state: { stringArt: StringArtState }) => state.stringArt
+  );
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [showOriginal, setShowOriginal] = useState(false);
 

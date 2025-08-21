@@ -1,55 +1,72 @@
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch } from "../shared/redux/store";
-import { generateStringArtThunk, type StringArtState } from "../shared/redux/stringArtSlice";
+import {
+  generateStringArtThunk,
+  type StringArtState,
+} from "../shared/redux/stringArtSlice";
 import StringArtConfigSection from "./components/StringArtConfig/StringArtConfigSection";
+import UploadScreen from "../1Upload/UploadScreen";
+import { StringArtCanvas } from "./components/StringArtCanvas/StringArtCanvas";
 
 export default function RenderImageScreen() {
   const dispatch = useDispatch<AppDispatch>();
-  const {
-    imageData,
-    isGenerating,
-    progress,
-    settings,
-  } = useSelector((state: { stringArt: StringArtState }) => state.stringArt);
+  const { imageData, isGenerating, progress, settings } = useSelector(
+    (state: { stringArt: StringArtState }) => state.stringArt
+  );
 
   const handleStartGeneration = () => {
     if (!imageData) return;
-    dispatch(
-      generateStringArtThunk({ imageData, settings })
-    );
+    dispatch(generateStringArtThunk({ imageData, settings }));
   };
 
   return (
-    <div className="generation-controls">
-      <StringArtConfigSection key={"stringArt"} />
+    <main className="app-main">
+      <div className="controls-section">
+        <UploadScreen />
 
-      <button
-        onClick={handleStartGeneration}
-        disabled={isGenerating}
-        className="generate-button"
-      >
-        {isGenerating ? "Generating..." : "Generate String Art"}
-      </button>
+        {imageData && (
+          <div className="generation-controls">
+            <StringArtConfigSection key={"stringArt"} />
 
-      {progress && (
-        <div className="progress-section">
-          <div className="progress-header">
-            <span>Progress: {progress.completion_percent.toFixed(1)}%</span>
-            <span>
-              Lines: {progress.lines_completed}/{progress.total_lines}
-            </span>
+            <button
+              onClick={handleStartGeneration}
+              disabled={isGenerating}
+              className="generate-button"
+            >
+              {isGenerating ? "Generating..." : "Generate String Art"}
+            </button>
+
+            {progress && (
+              <div className="progress-section">
+                <div className="progress-header">
+                  <span>
+                    Progress: {progress.completion_percent.toFixed(1)}%
+                  </span>
+                  <span>
+                    Lines: {progress.lines_completed}/{progress.total_lines}
+                  </span>
+                </div>
+                <div className="progress-bar">
+                  <div
+                    className="progress-fill"
+                    style={{ width: `${progress.completion_percent}%` }}
+                  ></div>
+                </div>
+                <div className="progress-details">
+                  <span>Score: {progress.score.toFixed(1)}</span>
+                </div>
+              </div>
+            )}
           </div>
-          <div className="progress-bar">
-            <div
-              className="progress-fill"
-              style={{ width: `${progress.completion_percent}%` }}
-            ></div>
+        )}
+      </div>
+
+      <div className="canvas-section">
+            <StringArtCanvas
+              width={500}
+              height={500}
+            />
           </div>
-          <div className="progress-details">
-            <span>Score: {progress.score.toFixed(1)}</span>
-          </div>
-        </div>
-      )}
-    </div>
+    </main>
   );
 }
