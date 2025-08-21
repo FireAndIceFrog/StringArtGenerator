@@ -1,10 +1,11 @@
 .app {
-  min-height: 100vh;
-  width: 100vw;
-  background-color: #F8F8F8; /* Use a solid background color from the theme */
+  min-height: calc(100vh - 32px);
+  width: calc(100vw - 32px);
+  background-color: #f8f8f8; /* Use a solid background color from the theme */
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding: 16px;
 }
 
 .app-header {
@@ -13,9 +14,10 @@
   text-align: center;
   color: white;
   margin-bottom: 2rem;
-  background-color: #5E35B1; /* Use primary color from theme */
-  width: 100%;
+  background-color: #5e35b1; /* Use primary color from theme */
+  width: 100vw;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
 }
 
 .app-header h1 {
@@ -165,7 +167,8 @@
   align-items: flex-start;
 }
 
-.app-loading, .app-error {
+.app-loading,
+.app-error {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -173,28 +176,32 @@
   min-height: 100vh;
   text-align: center;
   color: #212121; /* Use primary text color from theme */
-  background-color: #F8F8F8; /* Use default background color from theme */
+  background-color: #f8f8f8; /* Use default background color from theme */
 }
 
 .loading-spinner {
   width: 50px;
   height: 50px;
   border: 5px solid rgba(0, 0, 0, 0.1); /* Lighter border for spinner */
-  border-top: 5px solid #5E35B1; /* Primary color for spinner top */
+  border-top: 5px solid #5e35b1; /* Primary color for spinner top */
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 1rem;
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .app-error button {
   margin-top: 1rem;
   padding: 0.75rem 1.5rem;
-  background: #D32F2F; /* Error color from theme */
+  background: #d32f2f; /* Error color from theme */
   color: white;
   border: none;
   border-radius: 4px;
@@ -203,7 +210,7 @@
 }
 
 .app-error button:hover {
-  background: #C62828; /* Darker error color on hover */
+  background: #c62828; /* Darker error color on hover */
 }
 
 @media (max-width: 768px) {
@@ -211,15 +218,15 @@
     grid-template-columns: 1fr;
     gap: 1rem;
   }
-  
+
   .app-header h1 {
     font-size: 2rem;
   }
-  
+
   .app-header p {
     font-size: 1rem;
   }
-  
+
   .preset-buttons {
     flex-direction: column;
   }
