@@ -1,5 +1,5 @@
 import { useSelector } from "react-redux";
-import { StringArtCanvas } from "./components/StringArtCanvas";
+import { StringArtCanvas } from "./components/StringArtCanvas/StringArtCanvas";
 import type { StringArtState } from "../shared/redux/stringArtSlice";
 
 export default function CanvasScreen() {
