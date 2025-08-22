@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, forwardRef, useImperativeHandle } from 'react';
+import { useRef, useEffect, useState, forwardRef, useImperativeHandle } from 'react';
 import style from './style.module.css'
 import type { StringArtState } from '../../../shared/redux/stringArtSlice';
 import { useSelector } from 'react-redux';

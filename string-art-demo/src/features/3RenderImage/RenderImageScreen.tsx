@@ -1,4 +1,4 @@
-import React, { useRef, forwardRef, useImperativeHandle } from 'react';
+import { useRef, forwardRef, useImperativeHandle } from 'react';
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch } from "../shared/redux/store";
 import {
@@ -8,11 +8,7 @@ import {
 import StringArtConfigSection from "./components/StringArtConfig/StringArtConfigSection";
 import { StringArtCanvas } from "./components/StringArtCanvas/StringArtCanvas";
 
-interface RenderImageScreenProps {
-  onDownloadImage?: () => void;
-}
-
-const RenderImageScreen = forwardRef<HTMLCanvasElement, RenderImageScreenProps>(({ onDownloadImage }, ref) => {
+const RenderImageScreen = forwardRef<HTMLCanvasElement>((_, ref) => {
   const dispatch = useDispatch<AppDispatch>();
   const { imageData, isGenerating, progress, settings } = useSelector(
     (state: { stringArt: StringArtState }) => state.stringArt

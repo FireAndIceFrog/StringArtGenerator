@@ -1,6 +1,6 @@
 import { useSelector, useDispatch } from "react-redux";
-import { type StringArtConfig } from "../../../shared/services/StringArtService";
 import { setSettings } from "../../../shared/redux/stringArtSlice";
+import type { StringArtConfig } from "../../../shared/interfaces/stringArtConfig";
 
 const Slider = ({
   title,
@@ -44,7 +44,7 @@ const Slider = ({
       <input
         value={value}
         type="range"
-        id={`slider-${index}`}
+        id={String(`slider-${index}`)}
         name={title}
         min={min}
         max={max}

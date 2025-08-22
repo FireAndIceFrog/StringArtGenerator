@@ -11,7 +11,6 @@ function App() {
   const {
     isLoading,
     error,
-    isGenerating,
   } = useSelector((state: { stringArt: StringArtState }) => state.stringArt);
 
   if (isLoading) {
