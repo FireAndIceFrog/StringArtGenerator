@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "translate": "npx i18next-scanner \"src/*.tsx\" --config ./i18next-scanner.config.cjs"
+    "translate": "npx i18next-scanner \"src/**/*.tsx\" --config ./i18next-scanner.config.cjs"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

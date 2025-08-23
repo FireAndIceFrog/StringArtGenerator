@@ -1,16 +1,36 @@
 {
-  "Loading WASM Module": {
-    "": {
-      "": {
-        "": ""
-      }
-    }
-  },
-  "Please wait while we initialize the string art generator": {
-    "": ""
-  },
-  "Error Loading WASM Module": "",
-  "Retry": "",
-  "String Art Generator": "",
-  "Upload an image and watch it transform into beautiful string art in real-time!": ""
+  "Loading WASM Module": "Loading WASM Module",
+  "Please wait while we initialize the string art generator": "Please wait while we initialize the string art generator",
+  "Error Loading WASM Module": "Error Loading WASM Module",
+  "Retry": "Retry",
+  "String Art Generator": "String Art Generator",
+  "Upload an image and watch it transform into beautiful string art in real-time!": "Upload an image and watch it transform into beautiful string art in real-time!",
+  "Please select an image file": "Please select an image file",
+  "Error reading file": "Error reading file",
+  "Upload disabled during generation": "Upload disabled during generation",
+  "Drag & drop an image here, or click to select": "Drag & drop an image here, or click to select",
+  "Choose Image": "Choose Image",
+  "Number of Nails": "Number of Nails",
+  "Image Size": "Image Size",
+  "Preserve Eyes": "Preserve Eyes",
+  "Preserve Negative Space": "Preserve Negative Space",
+  "Negative Space Penalty": "Negative Space Penalty",
+  "Negative Space Threshold": "Negative Space Threshold",
+  "Max Lines": "Max Lines",
+  "Line Darkness": "Line Darkness",
+  "Min Improvement Score": "Min Improvement Score",
+  "Progress Frequency": "Progress Frequency",
+  "String Art Configuration": "String Art Configuration",
+  "Generating": "Generating",
+  "Generate String Art": "Generate String Art",
+  "Progress ": "Progress ",
+  "Lines ": "Lines ",
+  "Score ": "Score ",
+  "Upload Image": "Upload Image",
+  "Render String Art": "Render String Art",
+  "All steps completed - you're finished": "All steps completed - you're finished",
+  "Download Image": "Download Image",
+  "Back": "Back",
+  "Finish": "Finish",
+  "Next": "Next"
 }

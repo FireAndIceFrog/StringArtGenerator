@@ -9,14 +9,15 @@ import UploadScreen from '../1Upload/UploadScreen';
 import RenderImageScreen from '../3RenderImage/RenderImageScreen';
 import { useSelector } from 'react-redux';
 import { type StringArtState } from '../shared/redux/stringArtSlice';
+import { useTranslation } from 'react-i18next';
 
-const steps = ['Upload Image', 'Render String Art'];
 
 export default function StepperScreen() {
+  const i18next = useTranslation();
+  const steps = [i18next.t('Upload Image'), i18next.t('Render String Art')];
   const [activeStep, setActiveStep] = React.useState(0);
   const { imageData } = useSelector((state: { stringArt: StringArtState }) => state.stringArt);
   const renderImageScreenRef = React.useRef<HTMLCanvasElement>(null);
-
   const handleNext = () => {
     setActiveStep((prevActiveStep) => prevActiveStep + 1);
   };
@@ -77,11 +78,11 @@ export default function StepperScreen() {
       {activeStep === steps.length ? (
         <React.Fragment>
           <Typography sx={{ mt: 2, mb: 1 }}>
-            All steps completed - you're finished
+            {i18next.t("All steps completed - you're finished")}
           </Typography>
           <Box sx={{ display: 'flex', flexDirection: 'row', pt: 2 }}>
             <Box sx={{ flex: '1 1 auto' }} />
-            <Button onClick={handleFinish}>Download Image</Button>
+            <Button onClick={handleFinish}>{i18next.t("Download Image")}</Button>
           </Box>
         </React.Fragment>
       ) : (
@@ -95,11 +96,11 @@ export default function StepperScreen() {
               onClick={handleBack}
               sx={{ mr: 1 }}
             >
-              Back
+              {i18next.t("Back")}
             </Button>
             <Box sx={{ flex: '1 1 auto' }} />
             <Button onClick={activeStep === steps.length - 1 ? handleFinish : handleNext} disabled={!imageData && activeStep === 0}>
-              {activeStep === steps.length - 1 ? 'Finish' : 'Next'}
+              {activeStep === steps.length - 1 ? i18next.t("Finish") : i18next.t("Next")}
             </Button>
           </Box>
         </React.Fragment>

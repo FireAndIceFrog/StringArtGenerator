@@ -17,7 +17,7 @@ function App() {
     return (
       <div className="app-loading">
         <div className="loading-spinner"></div>
-        <h2>{i18next.t('Loading WASM Module...')}</h2>
+        <h2>{i18next.t('Loading WASM Module')}</h2>
         <p>{i18next.t('Please wait while we initialize the string art generator.')}</p>
       </div>
     );

@@ -7,9 +7,11 @@ import {
 } from "../shared/redux/stringArtSlice";
 import StringArtConfigSection from "./components/StringArtConfig/StringArtConfigSection";
 import { StringArtCanvas } from "./components/StringArtCanvas/StringArtCanvas";
+import { useTranslation } from 'react-i18next';
 
 const RenderImageScreen = forwardRef<HTMLCanvasElement>((_, ref) => {
   const dispatch = useDispatch<AppDispatch>();
+  const i18next = useTranslation();
   const { imageData, isGenerating, progress, settings } = useSelector(
     (state: { stringArt: StringArtState }) => state.stringArt
   );
@@ -35,17 +37,17 @@ const RenderImageScreen = forwardRef<HTMLCanvasElement>((_, ref) => {
               disabled={isGenerating}
               className="generate-button"
             >
-              {isGenerating ? "Generating..." : "Generate String Art"}
+              {isGenerating ? i18next.t("Generating...") : i18next.t("Generate String Art")}
             </button>
 
             {progress && (
               <div className="progress-section">
                 <div className="progress-header">
                   <span>
-                    Progress: {progress.completion_percent.toFixed(1)}%
+                    {i18next.t("Progress ") + progress.completion_percent.toFixed(2) + "%"}
                   </span>
                   <span>
-                    Lines: {progress.lines_completed}/{progress.total_lines}
+                    {i18next.t("Lines ") + progress.lines_completed + "/" + progress.total_lines}
                   </span>
                 </div>
                 <div className="progress-bar">
@@ -55,7 +57,7 @@ const RenderImageScreen = forwardRef<HTMLCanvasElement>((_, ref) => {
                   ></div>
                 </div>
                 <div className="progress-details">
-                  <span>Score: {progress.score.toFixed(1)}</span>
+                  <span>{i18next.t("Score ") + progress.score.toFixed(1)}</span>
                 </div>
               </div>
             )}
