@@ -1,23 +1,23 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import { NodeGlobalsPolyfillPlugin } from '@esbuild-plugins/node-globals-polyfill'
-import { NodeModulesPolyfillPlugin } from '@esbuild-plugins/node-modules-polyfill'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import { NodeGlobalsPolyfillPlugin } from "@esbuild-plugins/node-globals-polyfill";
+import { NodeModulesPolyfillPlugin } from "@esbuild-plugins/node-modules-polyfill";
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/StringArtGenerator/',
+  base: "/StringArtGenerator/",
   plugins: [react()],
   server: {
     fs: {
-      allow: ['..']
+      allow: [".."],
     },
     headers: {
-      'Cross-Origin-Embedder-Policy': 'require-corp',
-      'Cross-Origin-Opener-Policy': 'same-origin',
-    }
+      "Cross-Origin-Embedder-Policy": "require-corp",
+      "Cross-Origin-Opener-Policy": "same-origin",
+    },
   },
   optimizeDeps: {
-    exclude: ['string-art-wasm'],
+    exclude: ["string-art-wasm"],
     esbuildOptions: {
       plugins: [
         NodeGlobalsPolyfillPlugin({
@@ -30,10 +30,10 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      crypto: 'crypto-browserify',
+      crypto: "crypto-browserify",
     },
   },
   build: {
-    target: 'esnext'
-  }
-})
+    target: "esnext",
+  },
+});

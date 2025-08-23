@@ -1,0 +1,16 @@
+{
+  "Loading WASM Module": {
+    "": {
+      "": {
+        "": ""
+      }
+    }
+  },
+  "Please wait while we initialize the string art generator": {
+    "": ""
+  },
+  "Error Loading WASM Module": "",
+  "Retry": "",
+  "String Art Generator": "",
+  "Upload an image and watch it transform into beautiful string art in real-time!": ""
+}
