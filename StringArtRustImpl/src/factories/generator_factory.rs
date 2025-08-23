@@ -24,8 +24,6 @@ impl StringArtFactory {
         let target_image = load_and_preprocess_image(
             image_path,
             config.image_size as u32,
-            config.extract_subject,
-            config.remove_shadows,
         )?;
 
         let residual_image = 255.0 - &target_image;
@@ -68,8 +66,6 @@ impl StringArtFactory {
         let target_image = preprocess_image_from_memory(
             image_data,
             config.image_size as u32,
-            config.extract_subject,
-            config.remove_shadows,
         )?;
 
         let residual_image = 255.0 - &target_image;

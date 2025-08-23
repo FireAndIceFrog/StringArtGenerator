@@ -25,54 +25,50 @@ pub struct EyeRegion {
 pub fn preprocess_image_from_memory(
     image_data: &[u8],
     target_size: u32,
-    extract_subject: bool,
-    remove_shadows: bool,
 ) -> Result<Array2<f32>> {
     // Load image from memory and convert to grayscale
     let img = image::load_from_memory(image_data)?.to_luma8();
     
-    preprocess_image_internal(img, target_size, extract_subject, remove_shadows)
+    preprocess_image_internal(img, target_size)
 }
 
 /// Loads and preprocesses an image for string art generation
 pub fn load_and_preprocess_image(
     image_path: &str,
     target_size: u32,
-    extract_subject: bool,
-    remove_shadows: bool,
 ) -> Result<Array2<f32>> {
     // Load image and convert to grayscale
     let img = image::open(image_path)?.to_luma8();
     
-    preprocess_image_internal(img, target_size, extract_subject, remove_shadows)
+    preprocess_image_internal(img, target_size)
 }
 
 /// Internal preprocessing logic shared by both file and memory-based functions
 fn preprocess_image_internal(
     img: GrayImage,
     target_size: u32,
-    extract_subject: bool,
-    remove_shadows: bool,
 ) -> Result<Array2<f32>> {
     let (width, height) = img.dimensions();
     
     println!("Loaded image: {}x{}", width, height);
     
-    // Find the most common color for background
-    let background_color = get_most_common_color(&img)?;
-    println!("Most common color: {}", background_color);
-    
-    // Create square canvas with background color
-    let mut canvas = ImageBuffer::from_pixel(target_size, target_size, Luma([background_color]));
-    
+
     // Calculate scaling to preserve aspect ratio
     let scale = (target_size as f32 / width as f32).min(target_size as f32 / height as f32);
     let new_width = (width as f32 * scale) as u32;
     let new_height = (height as f32 * scale) as u32;
     
     // Resize image
-    let resized = image::imageops::resize(&img, new_width, new_height, image::imageops::FilterType::Lanczos3);
+    let resized = image::imageops::resize(&img, new_width, new_height, image::imageops::FilterType::Nearest);
     
+    // Find the most common color for background
+    let background_color = get_most_common_color(&resized)?;
+    println!("Most common color: {}", background_color);
+    
+    // Create square canvas with background color
+    let mut canvas = ImageBuffer::from_pixel(target_size, target_size, Luma([background_color]));
+    
+
     // Center the image on canvas
     let start_x = (target_size - new_width) / 2;
     let start_y = (target_size - new_height) / 2;
@@ -81,27 +77,15 @@ fn preprocess_image_internal(
         canvas.put_pixel(start_x + x, start_y + y, *pixel);
     }
     
-    let mut processed = canvas;
-    
-    // Remove shadows if requested
-    if remove_shadows {
-        processed = remove_shadows_clahe(&processed)?;
-    }
-    
-    // Extract subject if requested
-    if extract_subject {
-        processed = extract_subject_canny(&processed)?;
-    }
-    
     // Save processed image for reference (skip in WASM)
     if std::env::var("CARGO_CFG_TARGET_ARCH").unwrap_or_default() != "wasm32" {
-        if let Err(e) = processed.save("string_art_input.png") {
+        if let Err(e) = canvas.save("string_art_input.png") {
             eprintln!("Warning: Could not save processed image: {}", e);
         }
     }
     
     // Convert to ndarray
-    let array = image_to_array(&processed);
+    let array = image_to_array(&canvas);
     Ok(array)
 }
 
@@ -120,183 +104,6 @@ fn get_most_common_color(img: &GrayImage) -> Result<u8> {
         .ok_or_else(|| StringArtError::InvalidParameter {
             message: "Empty image".to_string(),
         })
-}
-
-/// Remove shadows using CLAHE (Contrast Limited Adaptive Histogram Equalization)
-#[cfg(feature = "opencv-support")]
-fn remove_shadows_clahe(img: &GrayImage) -> Result<GrayImage> {
-    let (width, height) = img.dimensions();
-    
-    // Convert to OpenCV Mat
-    let mut cv_img = Mat::new_rows_cols_with_default(
-        height as i32,
-        width as i32,
-        CV_8UC1,
-        opencv::core::Scalar::all(0.0),
-    )?;
-    
-    // Copy data
-    for (x, y, pixel) in img.enumerate_pixels() {
-        cv_img.at_2d_mut::<u8>(y as i32, x as i32)? = &pixel[0];
-    }
-    
-    // Apply CLAHE
-    let mut clahe = CLAHE::create_default()?;
-    clahe.set_clip_limit(2.0)?;
-    clahe.set_tile_grid_size(Size::new(8, 8))?;
-    
-    let mut enhanced = Mat::default();
-    clahe.apply(&cv_img, &mut enhanced)?;
-    
-    // Apply gamma correction
-    let mut corrected = Mat::default();
-    let gamma = 1.2;
-    let inv_gamma = 1.0 / gamma;
-    
-    let mut lookup_table = Vec::with_capacity(256);
-    for i in 0..256 {
-        let val = ((i as f64 / 255.0).powf(inv_gamma) * 255.0) as u8;
-        lookup_table.push(val);
-    }
-    
-    // Apply lookup table
-    for row in 0..enhanced.rows() {
-        for col in 0..enhanced.cols() {
-            let val = enhanced.at_2d::<u8>(row, col)?;
-            corrected.at_2d_mut::<u8>(row, col)? = &lookup_table[*val as usize];
-        }
-    }
-    
-    // Convert back to image
-    let mut result = ImageBuffer::new(width, height);
-    for (x, y, pixel) in result.enumerate_pixels_mut() {
-        let val = corrected.at_2d::<u8>(y as i32, x as i32)?;
-        *pixel = Luma([*val]);
-    }
-    
-    Ok(result)
-}
-
-/// Extract subject using Canny edge detection
-#[cfg(feature = "opencv-support")]
-fn extract_subject_canny(img: &GrayImage) -> Result<GrayImage> {
-    let (width, height) = img.dimensions();
-    
-    // Convert to OpenCV Mat
-    let mut cv_img = Mat::new_rows_cols_with_default(
-        height as i32,
-        width as i32,
-        CV_8UC1,
-        opencv::core::Scalar::all(0.0),
-    )?;
-    
-    for (x, y, pixel) in img.enumerate_pixels() {
-        cv_img.at_2d_mut::<u8>(y as i32, x as i32)? = &pixel[0];
-    }
-    
-    // Apply bilateral filter
-    let mut filtered = Mat::default();
-    imgproc::bilateral_filter(&cv_img, &mut filtered, 9, 75.0, 75.0, opencv::core::BORDER_DEFAULT)?;
-    
-    // Apply Canny edge detection
-    let mut edges = Mat::default();
-    imgproc::canny(&filtered, &mut edges, 50.0, 150.0, 3, false)?;
-    
-    // Dilate edges
-    let kernel = imgproc::get_structuring_element(
-        imgproc::MORPH_RECT,
-        Size::new(3, 3),
-        opencv::core::Point::new(-1, -1),
-    )?;
-    let mut edges_dilated = Mat::default();
-    imgproc::dilate(&edges, &mut edges_dilated, &kernel, opencv::core::Point::new(-1, -1), 1, opencv::core::BORDER_CONSTANT, opencv::core::Scalar::all(0.0))?;
-    
-    // Find contours
-    let mut contours = opencv::core::Vector::<opencv::core::Vector<opencv::core::Point>>::new();
-    let mut hierarchy = opencv::core::Vector::<opencv::core::Vec4i>::new();
-    imgproc::find_contours(
-        &edges_dilated,
-        &mut contours,
-        &mut hierarchy,
-        imgproc::RETR_EXTERNAL,
-        imgproc::CHAIN_APPROX_SIMPLE,
-        opencv::core::Point::new(0, 0),
-    )?;
-    
-    // Find largest contour
-    let mut largest_area = 0.0;
-    let mut largest_contour_idx = None;
-    
-    for i in 0..contours.len() {
-        let contour = contours.get(i)?;
-        let area = imgproc::contour_area(&contour, false)?;
-        if area > largest_area {
-            largest_area = area;
-            largest_contour_idx = Some(i);
-        }
-    }
-    
-    // Create result image
-    let mut result = ImageBuffer::from_pixel(width, height, Luma([255u8])); // White background
-    
-    if let Some(idx) = largest_contour_idx {
-        let min_area = (width * height) as f64 * 0.05; // At least 5% of image
-        
-        if largest_area > min_area {
-            // Create mask
-            let mut mask = Mat::zeros(height as i32, width as i32, CV_8UC1)?.to_mat()?;
-            let contour = contours.get(idx)?;
-            
-            // Fill contour
-            let mut contours_vec = opencv::core::Vector::new();
-            contours_vec.push(contour);
-            imgproc::fill_poly(
-                &mut mask,
-                &contours_vec,
-                opencv::core::Scalar::all(255.0),
-                opencv::imgproc::LINE_8,
-                0,
-                opencv::core::Point::new(0, 0),
-            )?;
-            
-            // Apply Gaussian blur to mask for smooth transitions
-            let mut blurred_mask = Mat::default();
-            imgproc::gaussian_blur(&mask, &mut blurred_mask, Size::new(21, 21), 0.0, 0.0, opencv::core::BORDER_DEFAULT)?;
-            
-            // Apply threshold
-            let mut final_mask = Mat::default();
-            imgproc::threshold(&blurred_mask, &mut final_mask, 30.0, 255.0, imgproc::THRESH_BINARY)?;
-            
-            // Blend original image with white background using mask
-            for (x, y, pixel) in result.enumerate_pixels_mut() {
-                let mask_val = *final_mask.at_2d::<u8>(y as i32, x as i32)? as f32 / 255.0;
-                let original_val = img.get_pixel(x, y)[0] as f32;
-                let blended = (255.0 * (1.0 - mask_val) + original_val * mask_val) as u8;
-                *pixel = Luma([blended]);
-            }
-        } else {
-            // Contour too small, return original
-            result = img.clone();
-        }
-    } else {
-        // No contours found, return original
-        result = img.clone();
-    }
-    
-    Ok(result)
-}
-
-/// Fallback implementations when OpenCV is not available
-#[cfg(not(feature = "opencv-support"))]
-fn remove_shadows_clahe(img: &GrayImage) -> Result<GrayImage> {
-    println!("Warning: Shadow removal requires OpenCV support. Returning original image.");
-    Ok(img.clone())
-}
-
-#[cfg(not(feature = "opencv-support"))]
-fn extract_subject_canny(img: &GrayImage) -> Result<GrayImage> {
-    println!("Warning: Subject extraction requires OpenCV support. Returning original image.");
-    Ok(img.clone())
 }
 
 /// Detect eyes in the image using OpenCV's Haar cascade
@@ -371,12 +178,6 @@ pub fn detect_eyes(img: &Array2<f32>) -> Result<Vec<EyeRegion>> {
     println!("Using fallback eye detection (no OpenCV support)");
     
     // Use simple computer vision techniques to detect potential eye regions
-    detect_eyes_simple(img)
-}
-
-/// Simple eye detection without OpenCV
-/// Looks for dark circular regions in the upper half of the image
-fn detect_eyes_simple(img: &Array2<f32>) -> Result<Vec<EyeRegion>> {
     let (height, width) = img.dim();
     let mut eye_regions = Vec::new();
     

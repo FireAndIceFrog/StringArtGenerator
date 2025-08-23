@@ -194,8 +194,6 @@ fn main() {
         let config = StringArtConfig {
             num_nails: nails,
             image_size: size,
-            extract_subject: !matches.get_flag("no-subject-extraction"),
-            remove_shadows: !matches.get_flag("no-shadow-removal"),
             preserve_eyes: !matches.get_flag("no-eye-protection"),
             preserve_negative_space: matches.get_flag("preserve-text"),
             negative_space_penalty,

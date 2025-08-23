@@ -1,5 +1,5 @@
 use ndarray::Array2;
-use std::f64::consts::PI;
+use std::{f64::consts::PI};
 
 /// Represents a 2D coordinate
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -17,7 +17,6 @@ impl Coord {
 /// Calculate nail coordinates around a circle
 pub fn calculate_nail_coords(num_nails: usize, center: Coord, radius: i32) -> Vec<Coord> {
     let mut coords = Vec::with_capacity(num_nails);
-
     for i in 0..num_nails {
         let angle = 2.0 * PI * (i as f64) / (num_nails as f64);
         let x = center.x + (radius as f64 * angle.cos()) as i32;

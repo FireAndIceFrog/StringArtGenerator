@@ -30,8 +30,6 @@ const initialState: StringArtState = {
   settings: {
     num_nails: 360,
     image_size: 500,
-    extract_subject: false,
-    remove_shadows: false,
     preserve_eyes: true,
     preserve_negative_space: false,
     negative_space_penalty: 5,

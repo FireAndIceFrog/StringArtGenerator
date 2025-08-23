@@ -281,7 +281,7 @@ function __wbg_adapter_28(arg0, arg1, arg2) {
     wasm.closure90_externref_shim(arg0, arg1, arg2);
 }
 
-function __wbg_adapter_99(arg0, arg1, arg2, arg3) {
+function __wbg_adapter_95(arg0, arg1, arg2, arg3) {
     wasm.closure639_externref_shim(arg0, arg1, arg2, arg3);
 }
 
@@ -536,32 +536,6 @@ export class WasmStringArtConfig {
     /**
      * @returns {boolean}
      */
-    get extract_subject() {
-        const ret = wasm.__wbg_get_wasmstringartconfig_extract_subject(this.__wbg_ptr);
-        return ret !== 0;
-    }
-    /**
-     * @param {boolean} arg0
-     */
-    set extract_subject(arg0) {
-        wasm.__wbg_set_wasmstringartconfig_extract_subject(this.__wbg_ptr, arg0);
-    }
-    /**
-     * @returns {boolean}
-     */
-    get remove_shadows() {
-        const ret = wasm.__wbg_get_wasmstringartconfig_remove_shadows(this.__wbg_ptr);
-        return ret !== 0;
-    }
-    /**
-     * @param {boolean} arg0
-     */
-    set remove_shadows(arg0) {
-        wasm.__wbg_set_wasmstringartconfig_remove_shadows(this.__wbg_ptr, arg0);
-    }
-    /**
-     * @returns {boolean}
-     */
     get preserve_eyes() {
         const ret = wasm.__wbg_get_wasmstringartconfig_preserve_eyes(this.__wbg_ptr);
         return ret !== 0;
@@ -711,7 +685,7 @@ function __wbg_get_imports() {
                 const a = state0.a;
                 state0.a = 0;
                 try {
-                    return __wbg_adapter_99(a, state0.b, arg0, arg1);
+                    return __wbg_adapter_95(a, state0.b, arg0, arg1);
                 } finally {
                     state0.a = a;
                 }
@@ -810,7 +784,7 @@ function __wbg_get_imports() {
         const ret = false;
         return ret;
     };
-    imports.wbg.__wbindgen_closure_wrapper339 = function(arg0, arg1, arg2) {
+    imports.wbg.__wbindgen_closure_wrapper335 = function(arg0, arg1, arg2) {
         const ret = makeMutClosure(arg0, arg1, 91, __wbg_adapter_28);
         return ret;
     };

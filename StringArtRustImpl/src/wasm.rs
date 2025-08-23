@@ -31,8 +31,6 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 pub struct WasmStringArtConfig {
     pub num_nails: usize,
     pub image_size: usize,
-    pub extract_subject: bool,
-    pub remove_shadows: bool,
     pub preserve_eyes: bool,
     pub preserve_negative_space: bool,
     pub negative_space_penalty: f32,
@@ -46,8 +44,6 @@ impl WasmStringArtConfig {
         WasmStringArtConfig {
             num_nails: 720,
             image_size: 500,
-            extract_subject: true,
-            remove_shadows: true,
             preserve_eyes: true,
             preserve_negative_space: false,
             negative_space_penalty: 0.5,
@@ -60,8 +56,6 @@ impl WasmStringArtConfig {
         WasmStringArtConfig {
             num_nails: 360,
             image_size: 300,
-            extract_subject: false,
-            remove_shadows: false,
             preserve_eyes: false,
             preserve_negative_space: false,
             negative_space_penalty: 0.5,
@@ -74,8 +68,6 @@ impl WasmStringArtConfig {
         WasmStringArtConfig {
             num_nails: 720,
             image_size: 2000,
-            extract_subject: true,
-            remove_shadows: true,
             preserve_eyes: true,
             preserve_negative_space: false,
             negative_space_penalty: 0.5,
@@ -88,8 +80,6 @@ impl WasmStringArtConfig {
         WasmStringArtConfig {
             num_nails: 1440,
             image_size: 2000,
-            extract_subject: true,
-            remove_shadows: true,
             preserve_eyes: true,
             preserve_negative_space: false,
             negative_space_penalty: 0.5,
@@ -103,8 +93,6 @@ impl From<WasmStringArtConfig> for StringArtConfig {
         StringArtConfig {
             num_nails: wasm_config.num_nails,
             image_size: wasm_config.image_size,
-            extract_subject: wasm_config.extract_subject,
-            remove_shadows: wasm_config.remove_shadows,
             preserve_eyes: wasm_config.preserve_eyes,
             preserve_negative_space: wasm_config.preserve_negative_space,
             negative_space_penalty: wasm_config.negative_space_penalty,

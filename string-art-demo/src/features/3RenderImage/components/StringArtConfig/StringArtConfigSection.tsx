@@ -16,8 +16,6 @@ const Slider = ({
   const minMaxVals: Record<
     keyof Omit<
       StringArtConfig,
-      | "extract_subject"
-      | "remove_shadows"
       | "preserve_eyes"
       | "preserve_negative_space"
     >,

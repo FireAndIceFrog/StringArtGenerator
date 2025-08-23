@@ -16,7 +16,6 @@ impl EyeEnhancementMask {
 impl MaskApplicator for EyeEnhancementMask {
     fn apply(&self, state: Arc<RwLock<StringArtState>>) -> Result<()> {
         let mut state = state.write().unwrap();
-
         if state.config.preserve_eyes {
             let eyes = detect_eyes(&state.target_image).unwrap_or_else(|e| {
                 eprintln!("Warning: Eye detection failed: {}. Eyes will not be enhanced.", e);
@@ -27,7 +26,6 @@ impl MaskApplicator for EyeEnhancementMask {
             state.eye_regions = eyes;
             state.eye_protection_mask = mask;
         }
-
         Ok(())
     }
 }

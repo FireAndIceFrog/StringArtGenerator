@@ -6,13 +6,13 @@ interface WorkerMessage {
   config: StringArtConfig;
 }
 
+// Initialize the WASM module
+await init();
+
 self.onmessage = async (event: MessageEvent<WorkerMessage>) => {
   const { imageData, config } = event.data as { imageData: Uint8Array, config: StringArtConfig};
 
   try {
-    // Initialize the WASM module
-    await init();
-
     // Convert config to WASM-compatible format
     const wasmConfig = new WasmStringArtConfig();
     Object.assign(wasmConfig, config);

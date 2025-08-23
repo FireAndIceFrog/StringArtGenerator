@@ -71,8 +71,6 @@ export class WasmStringArtConfig {
   static preset_high_quality(): WasmStringArtConfig;
   num_nails: number;
   image_size: number;
-  extract_subject: boolean;
-  remove_shadows: boolean;
   preserve_eyes: boolean;
   preserve_negative_space: boolean;
   negative_space_penalty: number;
@@ -88,10 +86,6 @@ export interface InitOutput {
   readonly __wbg_set_wasmstringartconfig_num_nails: (a: number, b: number) => void;
   readonly __wbg_get_wasmstringartconfig_image_size: (a: number) => number;
   readonly __wbg_set_wasmstringartconfig_image_size: (a: number, b: number) => void;
-  readonly __wbg_get_wasmstringartconfig_extract_subject: (a: number) => number;
-  readonly __wbg_set_wasmstringartconfig_extract_subject: (a: number, b: number) => void;
-  readonly __wbg_get_wasmstringartconfig_remove_shadows: (a: number) => number;
-  readonly __wbg_set_wasmstringartconfig_remove_shadows: (a: number, b: number) => void;
   readonly __wbg_get_wasmstringartconfig_preserve_eyes: (a: number) => number;
   readonly __wbg_set_wasmstringartconfig_preserve_eyes: (a: number, b: number) => void;
   readonly __wbg_get_wasmstringartconfig_preserve_negative_space: (a: number) => number;
