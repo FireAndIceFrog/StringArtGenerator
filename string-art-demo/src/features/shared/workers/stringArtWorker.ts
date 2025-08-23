@@ -7,9 +7,16 @@ interface WorkerMessage {
 }
 
 // Initialize the WASM module
-await init();
+let inited = false;
+init().then(() => {
+  inited = true;
+});
 
 self.onmessage = async (event: MessageEvent<WorkerMessage>) => {
+  if (!inited) {
+    throw new Error("WASM module not initialized");
+  }
+  
   const { imageData, config } = event.data as { imageData: Uint8Array, config: StringArtConfig};
 
   try {

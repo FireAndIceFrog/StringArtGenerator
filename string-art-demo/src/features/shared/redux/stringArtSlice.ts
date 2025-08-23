@@ -31,7 +31,7 @@ const initialState: StringArtState = {
     num_nails: 360,
     image_size: 500,
     preserve_eyes: true,
-    preserve_negative_space: false,
+    preserve_negative_space: true,
     negative_space_penalty: 5,
     negative_space_threshold: 0.5,
     max_lines: 2000,
