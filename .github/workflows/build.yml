@@ -30,7 +30,7 @@ jobs:
 
     - name: Install Node.js dependencies
       run: npm install
-      working-directory: string-art-demo
+      working-directory: string-art-website
 
     - name: Set up Rust
       uses: actions-rs/toolchain@v1
@@ -49,7 +49,7 @@ jobs:
     - name: Build static files
       id: build
       run: npm run build
-      working-directory: string-art-demo
+      working-directory: string-art-website
 
     - name: Upload static files as artifact
       id: deployment

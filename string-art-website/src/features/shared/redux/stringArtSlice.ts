@@ -103,18 +103,7 @@ const stringArtSlice = createSlice({
         state.progress = null;
         state.error = null;
       })
-      .addCase(generateStringArtThunk.fulfilled, (state, action) => {
-        // result.path and result.nailCoords from thunk payload
-        const result = action.payload;
-        if (result.path) {
-          const pathArr: number[] = Array.isArray(result.path)
-            ? result.path
-            : Array.from(result.path);
-          state.currentPath = [...state.currentPath, ...pathArr];
-        }
-        if (result.nailCoords.length > 0) {
-          state.nailCoords = result.nailCoords;
-        }
+      .addCase(generateStringArtThunk.fulfilled, (state) => {
         state.isGenerating = false;
       })
       .addCase(generateStringArtThunk.rejected, (state, action) => {
