@@ -55,7 +55,7 @@ jobs:
       id: deployment
       uses: actions/upload-pages-artifact@v3
       with:
-        path: string-art-demo/dist
+        path: string-art-website/dist
 
     - name: Create Release
       if: github.event_name == 'release'
