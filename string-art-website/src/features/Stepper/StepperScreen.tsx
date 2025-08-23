@@ -16,7 +16,7 @@ export default function StepperScreen() {
   const i18next = useTranslation();
   const steps = [i18next.t('Upload Image'), i18next.t('Render String Art')];
   const [activeStep, setActiveStep] = React.useState(0);
-  const { imageData } = useSelector((state: { stringArt: StringArtState }) => state.stringArt);
+  const { imageData, currentPath } = useSelector((state: { stringArt: StringArtState }) => state.stringArt);
   const renderImageScreenRef = React.useRef<HTMLCanvasElement>(null);
   const handleNext = () => {
     setActiveStep((prevActiveStep) => prevActiveStep + 1);
@@ -57,6 +57,20 @@ export default function StepperScreen() {
         }
       }
     }
+
+    // Download the path data using the same link element
+    if (currentPath && currentPath.length > 0) {
+      const pathData = currentPath.join(',');
+      const blob = new Blob([pathData], { type: 'text/plain;charset=utf-8' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'string-art-path.txt';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href); // Clean up the URL object
+    }
+
     handleReset();
   };
 
