@@ -95,18 +95,6 @@ fn main() {
                 .conflicts_with_all(&["nails", "size"]),
         )
         .arg(
-            Arg::new("no-subject-extraction")
-                .long("no-subject-extraction")
-                .help("Disable automatic subject extraction")
-                .action(clap::ArgAction::SetTrue),
-        )
-        .arg(
-            Arg::new("no-shadow-removal")
-                .long("no-shadow-removal")
-                .help("Disable shadow removal preprocessing")
-                .action(clap::ArgAction::SetTrue),
-        )
-        .arg(
             Arg::new("no-eye-protection")
                 .long("no-eye-protection")
                 .help("Disable eye detection and protection")
@@ -194,8 +182,6 @@ fn main() {
         let config = StringArtConfig {
             num_nails: nails,
             image_size: size,
-            extract_subject: !matches.get_flag("no-subject-extraction"),
-            remove_shadows: !matches.get_flag("no-shadow-removal"),
             preserve_eyes: !matches.get_flag("no-eye-protection"),
             preserve_negative_space: matches.get_flag("preserve-text"),
             negative_space_penalty,

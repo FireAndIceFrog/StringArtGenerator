@@ -1,8 +1,9 @@
 use ndarray::Array2;
 use std::f64::consts::PI;
+use serde::{Serialize, Deserialize};
 
 /// Represents a 2D coordinate
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Coord {
     pub x: i32,
     pub y: i32,

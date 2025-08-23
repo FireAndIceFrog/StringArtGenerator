@@ -37,8 +37,6 @@
 //! let config = StringArtConfig {
 //!     num_nails: 720,
 //!     image_size: 500,
-//!     extract_subject: true,
-//!     remove_shadows: true,
 //!     preserve_eyes: true,
 //!     ..Default::default()
 //! };
@@ -130,8 +128,6 @@ pub fn high_quality_generator(
     let config = StringArtConfig {
         num_nails: 1440,
         image_size: 800,
-        extract_subject: true,
-        remove_shadows: true,
         preserve_eyes: true,
         ..Default::default()
     };
@@ -160,8 +156,6 @@ pub fn fast_generator(
     let config = StringArtConfig {
         num_nails: 360,
         image_size: 300,
-        extract_subject: false,
-        remove_shadows: false,
         preserve_eyes: false,
         ..Default::default()
     };
@@ -215,8 +209,6 @@ mod tests {
         let config = default_config();
         assert_eq!(config.num_nails, 720);
         assert_eq!(config.image_size, 500);
-        assert!(config.extract_subject);
-        assert!(config.remove_shadows);
         assert!(config.preserve_eyes);
     }
 }
