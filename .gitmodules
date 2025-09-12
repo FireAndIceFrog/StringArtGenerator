@@ -1,0 +1,3 @@
+[submodule "string-art-model/libraries/MCAD"]
+	path = string-art-model/libraries/MCAD
+	url = https://github.com/openscad/MCAD.git

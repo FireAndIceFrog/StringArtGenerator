@@ -1,0 +1,9 @@
+mm = 1;
+cm = 10 * mm;
+m = 1000 * mm;
+inch = 25.4 * mm;
+ft = 12 * inch;
+yd = 3 * ft;
+mile = 1760 * yd;
+deg = 1;
+rad = 180 / pi * deg;

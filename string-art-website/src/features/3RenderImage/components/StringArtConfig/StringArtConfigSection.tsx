@@ -15,7 +15,7 @@ const minMaxVals: Record<
   min_improvement_score: [0, 100, 1],
   negative_space_penalty: [0, 100, 1],
   negative_space_threshold: [0, 100, 1],
-  num_nails: [360, 1440, 360 / 4],
+  num_nails: [180, 1440, 360 / 4],
   progress_frequency: [200, 500, 50],
 };
 
