@@ -6,4 +6,4 @@ ft = 12 * inch;
 yd = 3 * ft;
 mile = 1760 * yd;
 deg = 1;
-rad = 180 / pi * deg;
+rad = 180 / PI * deg;
