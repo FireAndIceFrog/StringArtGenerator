@@ -1,6 +1,7 @@
 
 include <models/nailBoard.scad>
 include <models/motorMount.scad>
+include <models/fabricFeeder.scad>
 
 include <constants/nailBoard.scad>
 include <constants/units.scad>

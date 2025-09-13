@@ -15,7 +15,3 @@ motor_mount_fabric_pole_radius = 4*mm;
 motor_mount_fabric_pole_height = 30*mm;
 motor_mount_fabric_pole_offset_x = -motor_mount_width*0.3;
 motor_mount_fabric_pole_offset_y = -motor_mount_height*0.3;
-
-
-fabric_arm_height = 100*mm;
-motor_mount_fabric_arm_width = 20*mm;
