@@ -27,11 +27,11 @@ module _sprocket_gear(translation_z = 0) {
     rotate([0,90,0])
         sprocket (hub_diameter = fabric_arm_axel_radius*2, size = 1);
     
-    axel_tranlation_x = (fabric_arm_width+10);
+    axel_translation_x = (fabric_arm_width+10);
     color("silver")
-    translate([-axel_tranlation_x,0,translation_z])
+    translate([-axel_translation_x,0,translation_z])
         rotate([0,90,0])
-            cylinder(h = axel_tranlation_x*2, r = fabric_arm_axel_radius, $fn=100);
+            cylinder(h = axel_translation_x*2, r = fabric_arm_axel_radius, $fn=100);
 
 }
 
