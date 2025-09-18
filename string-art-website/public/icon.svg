@@ -1,0 +1,16 @@
+<svg width="300" height="300" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="150" cy="150" r="140" stroke="black" stroke-width="16" fill="none"/>
+  <g stroke="black" stroke-width="12">
+    <!-- Radial threads -->
+    <line x1="150" y1="10" x2="150" y2="290"/>
+    <line x1="10" y1="150" x2="290" y2="150"/>
+    <line x1="50" y1="50" x2="250" y2="250"/>
+    <line x1="250" y1="50" x2="50" y2="250"/>
+    <!-- Circular threads -->
+    <path d="M150,10 Q200,150 150,290 Q100,150 150,10" fill="none"/>
+    <path d="M10,150 Q150,200 290,150 Q150,100 10,150" fill="none"/>
+  </g>
+  <text x="50%" y="95%" text-anchor="middle" font-size="24" fill="black" font-family="sans-serif">
+    String Art Generator
+  </text>
+</svg>

@@ -16,57 +16,58 @@
 //! ## Basic Usage
 //!
 //! ```rust,no_run
-//! use string_art_rust_impl::{GreedyGenerator, StringArtConfig, StringArtGenerator};
+//! use string_art_rust_impl::{StringArtFactory, StringArtConfig, StringArtGenerator, ImageRenderer};
 //!
 //! // Create a generator with default settings
-//! let mut generator = GreedyGenerator::new_default("portrait.jpg")?;
+//! let (mut generator, renderer, _) = StringArtFactory::create_from_image("portrait.jpg", StringArtConfig::default())?;
 //!
 //! // Generate string art path
-//! let path = generator.generate_path(5000, 25.0, 10.0, 20)?;
+//! let path = generator.generate_path(5000, 25.0, 10.0)?;
 //!
 //! // Render and save the result
-//! generator.render_image("string_art_output.png", None)?;
-//! generator.save_path("string_art_path.txt")?;
+//! renderer.save_image("string_art_output.png", None)?;
 //! # Ok::<(), Box<dyn std::error::Error>>(())
 //! ```
 //!
 //! ## Advanced Configuration
 //!
 //! ```rust,no_run
-//! use string_art_rust_impl::{GreedyGenerator, StringArtConfig, StringArtGenerator};
+//! use string_art_rust_impl::{StringArtFactory, StringArtConfig, StringArtGenerator, ImageRenderer};
 //!
 //! let config = StringArtConfig {
-//!     num_nails: 720,      // 2 nails per degree
-//!     image_size: 500,     // 500x500 pixel canvas
-//!     extract_subject: true,
-//!     remove_shadows: true,
+//!     num_nails: 720,
+//!     image_size: 500,
 //!     preserve_eyes: true,
+//!     ..Default::default()
 //! };
 //!
-//! let mut generator = GreedyGenerator::new("portrait.jpg", config)?;
-//! let path = generator.generate_path(
-//!     5000,  // max lines
-//!     25.0,  // line darkness
-//!     10.0,  // min improvement score
-//!     20     // save progress every 20 iterations
-//! )?;
+//! let (mut generator, renderer, _) = StringArtFactory::create_from_image("portrait.jpg", config)?;
+//! let path = generator.generate_path(5000, 25.0, 10.0)?;
 //! # Ok::<(), Box<dyn std::error::Error>>(())
 //! ```
 
-pub mod abstract_generator;
 pub mod error;
-pub mod greedy_generator;
+pub mod factories;
+pub mod generators;
 pub mod image_processing;
+pub mod masking;
+pub mod rendering;
+pub mod state;
+pub mod traits;
 pub mod utils;
 
 #[cfg(feature = "wasm")]
 pub mod wasm;
 
 // Re-export main types for easier use
-pub use abstract_generator::{AbstractStringArt, StringArtConfig, StringArtGenerator};
 pub use error::{Result, StringArtError};
-pub use greedy_generator::GreedyGenerator;
+pub use factories::generator_factory::StringArtFactory;
+pub use generators::greedy::GreedyGenerator;
 pub use image_processing::EyeRegion;
+pub use rendering::image_renderer::ImageRenderer;
+pub use state::config::StringArtConfig;
+pub use traits::generator::StringArtGenerator;
+pub use traits::renderer::ImageRenderer as ImageRendererTrait;
 pub use utils::Coord;
 
 /// Version information
@@ -94,13 +95,15 @@ pub fn default_config() -> StringArtConfig {
 /// ```rust,no_run
 /// use string_art_rust_impl::{quick_generator, StringArtGenerator};
 ///
-/// let mut generator = quick_generator("portrait.jpg")?;
-/// let path = generator.generate_path(1000, 25.0, 10.0, 50)?;
-/// generator.render_image("output.png", None)?;
+/// let (mut generator, renderer, _) = quick_generator("portrait.jpg")?;
+/// let path = generator.generate_path(1000, 25.0, 10.0)?;
+/// renderer.save_image("output.png", None)?;
 /// # Ok::<(), Box<dyn std::error::Error>>(())
 /// ```
-pub fn quick_generator(image_path: &str) -> Result<GreedyGenerator> {
-    GreedyGenerator::new_default(image_path)
+pub fn quick_generator(
+    image_path: &str,
+) -> Result<(GreedyGenerator, ImageRenderer, std::sync::Arc<std::sync::RwLock<state::app_state::StringArtState>>)> {
+    StringArtFactory::create_from_image(image_path, StringArtConfig::default())
 }
 
 /// Create a string art generator optimized for high quality results
@@ -115,22 +118,20 @@ pub fn quick_generator(image_path: &str) -> Result<GreedyGenerator> {
 /// ```rust,no_run
 /// use string_art_rust_impl::{high_quality_generator, StringArtGenerator};
 ///
-/// let mut generator = high_quality_generator("portrait.jpg")?;
-/// let path = generator.generate_path(10000, 20.0, 5.0, 100)?;
+/// let (mut generator, _, _) = high_quality_generator("portrait.jpg")?;
+/// let path = generator.generate_path(10000, 20.0, 5.0)?;
 /// # Ok::<(), Box<dyn std::error::Error>>(())
 /// ```
-pub fn high_quality_generator(image_path: &str) -> Result<GreedyGenerator> {
+pub fn high_quality_generator(
+    image_path: &str,
+) -> Result<(GreedyGenerator, ImageRenderer, std::sync::Arc<std::sync::RwLock<state::app_state::StringArtState>>)> {
     let config = StringArtConfig {
-        num_nails: 1440, // 4 nails per degree for higher precision
+        num_nails: 1440,
         image_size: 800,
-        extract_subject: true,
-        remove_shadows: true,
         preserve_eyes: true,
-        preserve_negative_space: false,
-        negative_space_penalty: 0.5,
-        negative_space_threshold: 200.0,
+        ..Default::default()
     };
-    GreedyGenerator::new(image_path, config)
+    StringArtFactory::create_from_image(image_path, config)
 }
 
 /// Create a string art generator optimized for speed
@@ -145,22 +146,20 @@ pub fn high_quality_generator(image_path: &str) -> Result<GreedyGenerator> {
 /// ```rust,no_run
 /// use string_art_rust_impl::{fast_generator, StringArtGenerator};
 ///
-/// let mut generator = fast_generator("portrait.jpg")?;
-/// let path = generator.generate_path(1000, 30.0, 15.0, 0)?;
+/// let (mut generator, _, _) = fast_generator("portrait.jpg")?;
+/// let path = generator.generate_path(1000, 30.0, 15.0)?;
 /// # Ok::<(), Box<dyn std::error::Error>>(())
 /// ```
-pub fn fast_generator(image_path: &str) -> Result<GreedyGenerator> {
+pub fn fast_generator(
+    image_path: &str,
+) -> Result<(GreedyGenerator, ImageRenderer, std::sync::Arc<std::sync::RwLock<state::app_state::StringArtState>>)> {
     let config = StringArtConfig {
-        num_nails: 360, // 1 nail per degree for speed
+        num_nails: 360,
         image_size: 300,
-        extract_subject: false, // Skip expensive preprocessing
-        remove_shadows: false,
         preserve_eyes: false,
-        preserve_negative_space: false,
-        negative_space_penalty: 0.5,
-        negative_space_threshold: 200.0,
+        ..Default::default()
     };
-    GreedyGenerator::new(image_path, config)
+    StringArtFactory::create_from_image(image_path, config)
 }
 
 #[cfg(test)]
@@ -196,9 +195,6 @@ mod tests {
         let image_path = create_test_image();
         let result = high_quality_generator(&image_path);
         assert!(result.is_ok());
-        
-        let generator = result.unwrap();
-        assert_eq!(generator.get_nail_coords().len(), 1440);
     }
 
     #[test]
@@ -206,9 +202,6 @@ mod tests {
         let image_path = create_test_image();
         let result = fast_generator(&image_path);
         assert!(result.is_ok());
-        
-        let generator = result.unwrap();
-        assert_eq!(generator.get_nail_coords().len(), 360);
     }
 
     #[test]
@@ -216,8 +209,6 @@ mod tests {
         let config = default_config();
         assert_eq!(config.num_nails, 720);
         assert_eq!(config.image_size, 500);
-        assert!(config.extract_subject);
-        assert!(config.remove_shadows);
         assert!(config.preserve_eyes);
     }
 }

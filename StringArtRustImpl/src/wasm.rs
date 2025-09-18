@@ -3,14 +3,16 @@
 //! This module provides JavaScript-friendly interfaces for the string art
 //! generation algorithms, enabling real-time streaming of results to web applications.
 
-use crate::abstract_generator::{StringArtConfig, StringArtGenerator};
-use crate::greedy_generator::GreedyGenerator;
-use crate::utils::Coord;
 use crate::error::StringArtError;
+use crate::factories::generator_factory::StringArtFactory;
+use crate::generators::greedy::GreedyGenerator;
+use crate::state::{app_state::StringArtState, config::StringArtConfig};
+use crate::traits::generator::StringArtGenerator;
+use js_sys::{Array, Function, Promise, Uint8Array};
 use serde::{Deserialize, Serialize};
+use std::sync::{Arc, RwLock};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
-use js_sys::{Array, Function, Promise, Uint8Array};
 use web_sys::console;
 
 // Set up panic hook for better debugging
@@ -29,8 +31,6 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 pub struct WasmStringArtConfig {
     pub num_nails: usize,
     pub image_size: usize,
-    pub extract_subject: bool,
-    pub remove_shadows: bool,
     pub preserve_eyes: bool,
     pub preserve_negative_space: bool,
     pub negative_space_penalty: f32,
@@ -44,8 +44,6 @@ impl WasmStringArtConfig {
         WasmStringArtConfig {
             num_nails: 720,
             image_size: 500,
-            extract_subject: true,
-            remove_shadows: true,
             preserve_eyes: true,
             preserve_negative_space: false,
             negative_space_penalty: 0.5,
@@ -58,8 +56,6 @@ impl WasmStringArtConfig {
         WasmStringArtConfig {
             num_nails: 360,
             image_size: 300,
-            extract_subject: false,
-            remove_shadows: false,
             preserve_eyes: false,
             preserve_negative_space: false,
             negative_space_penalty: 0.5,
@@ -72,8 +68,6 @@ impl WasmStringArtConfig {
         WasmStringArtConfig {
             num_nails: 720,
             image_size: 2000,
-            extract_subject: true,
-            remove_shadows: true,
             preserve_eyes: true,
             preserve_negative_space: false,
             negative_space_penalty: 0.5,
@@ -86,8 +80,6 @@ impl WasmStringArtConfig {
         WasmStringArtConfig {
             num_nails: 1440,
             image_size: 2000,
-            extract_subject: true,
-            remove_shadows: true,
             preserve_eyes: true,
             preserve_negative_space: false,
             negative_space_penalty: 0.5,
@@ -101,8 +93,6 @@ impl From<WasmStringArtConfig> for StringArtConfig {
         StringArtConfig {
             num_nails: wasm_config.num_nails,
             image_size: wasm_config.image_size,
-            extract_subject: wasm_config.extract_subject,
-            remove_shadows: wasm_config.remove_shadows,
             preserve_eyes: wasm_config.preserve_eyes,
             preserve_negative_space: wasm_config.preserve_negative_space,
             negative_space_penalty: wasm_config.negative_space_penalty,
@@ -126,9 +116,8 @@ pub struct ProgressInfo {
 #[wasm_bindgen]
 pub struct StringArtWasm {
     generator: Option<GreedyGenerator>,
+    state: Arc<RwLock<StringArtState>>,
     config: WasmStringArtConfig,
-    nail_coords: Vec<Coord>,
-    current_path: Vec<usize>,
 }
 
 #[wasm_bindgen]
@@ -136,30 +125,28 @@ impl StringArtWasm {
     /// Create a new StringArtWasm instance from image data
     #[wasm_bindgen(constructor)]
     pub fn new(image_data: &Uint8Array, config: Option<WasmStringArtConfig>) -> Result<StringArtWasm, JsValue> {
-        let config = config.unwrap_or_else(WasmStringArtConfig::new);
-        
-        // Convert Uint8Array to Vec<u8>
+        let wasm_config = config.unwrap_or_else(WasmStringArtConfig::new);
+        let app_config: StringArtConfig = wasm_config.clone().into();
+
         let image_bytes: Vec<u8> = image_data.to_vec();
-        
-        // Create generator from image bytes
-        let generator = Self::create_generator_from_bytes(&image_bytes, &config)
-            .map_err(|e| JsValue::from_str(&format!("Failed to create generator: {}", e)))?;
-        
-        let nail_coords = generator.get_nail_coords().to_vec();
-        
+
+        let (generator, _, state) =
+            StringArtFactory::create_from_image_data(&image_bytes, app_config)
+                .map_err(|e| JsValue::from_str(&format!("Failed to create generator: {}", e)))?;
+
         Ok(StringArtWasm {
             generator: Some(generator),
-            config,
-            nail_coords,
-            current_path: Vec::new(),
+            state,
+            config: wasm_config,
         })
     }
 
     /// Get nail coordinates as a JavaScript array
     #[wasm_bindgen]
     pub fn get_nail_coordinates(&self) -> Array {
+        let state = self.state.read().unwrap();
         let coords_array = Array::new();
-        for coord in &self.nail_coords {
+        for coord in &state.nail_coords {
             let coord_obj = Array::new();
             coord_obj.push(&JsValue::from(coord.x));
             coord_obj.push(&JsValue::from(coord.y));
@@ -235,8 +222,9 @@ impl StringArtWasm {
     /// Get the current path as a JavaScript array
     #[wasm_bindgen]
     pub fn get_current_path(&self) -> Array {
+        let state = self.state.read().unwrap();
         let path_array = Array::new();
-        for nail in &self.current_path {
+        for nail in &state.path {
             path_array.push(&JsValue::from(*nail));
         }
         path_array
@@ -256,15 +244,6 @@ impl StringArtWasm {
 }
 
 impl StringArtWasm {
-    /// Create generator from image bytes
-    fn create_generator_from_bytes(
-        image_bytes: &[u8],
-        config: &WasmStringArtConfig,
-    ) -> std::result::Result<GreedyGenerator, StringArtError> {
-        // Use the new memory-based constructor
-        GreedyGenerator::from_image_data(image_bytes, config.clone().into())
-    }
-
     /// Generate path with real streaming updates (async)
     async fn generate_with_streaming(
         mut generator: GreedyGenerator,
@@ -309,10 +288,20 @@ impl StringArtWasm {
                     console::log_1(&"❌ WASM: Failed to serialize progress data".into());
                 }
             },
-        )?;
+        );
 
-        console::log_1(&"Real-time streaming generation complete!".into());
-        Ok(path)
+        console::log_1(&"Real-time streaming generation complete! Check console for details.".into());
+        match path {
+            Ok(path) => {
+                console::log_1(&format!("✅ WASM: Path generation complete with {} nails", path.len()).into());
+                // Store the current path
+                Ok(path)
+            }
+            Err(e) => {
+                console::log_1(&format!("❌ WASM: Path generation failed: {}", e).into());
+                Err(e)
+            }
+        }
     }
 }
 

@@ -9,6 +9,9 @@ pub enum StringArtError {
     #[error("OpenCV error: {0}")]
     OpenCvError(#[from] opencv::Error),
     
+    #[error("State lock error")]
+    StateLock { message: String },
+
     #[error("IO error: {0}")]
     IoError(#[from] std::io::Error),
     
