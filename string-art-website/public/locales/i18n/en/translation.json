@@ -32,5 +32,9 @@
   "Download Image": "Download Image",
   "Back": "Back",
   "Finish": "Finish",
-  "Next": "Next"
+  "Next": "Next",
+  "Line length diameter Label": "Line length diameter (m): ",
+  "Line length output label": "Estimated line length: ",
+  "Line length calculating label": "Calculating line length...",
+  "Line length title": "Estimated Line Length"
 }

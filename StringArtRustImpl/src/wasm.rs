@@ -321,3 +321,14 @@ pub fn get_version() -> String {
 pub fn test_wasm() -> String {
     "WASM module loaded successfully!".to_string()
 }
+
+/// Compute length from indices for WASM consumers.
+/// Returns NaN on error.
+#[wasm_bindgen]
+pub fn compute_length_from_indices_wasm(path: Vec<u32>, num_nails: u32, diameter_m: f64, slack_pct: f64) -> f64 {
+    // Delegate to internal implementation
+    match crate::post_processing::compute_length_from_indices(&path, num_nails, diameter_m, slack_pct) {
+        Ok(v) => v,
+        Err(_) => f64::NAN,
+    }
+}

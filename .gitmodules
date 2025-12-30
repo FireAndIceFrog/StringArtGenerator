@@ -1,0 +1,6 @@
+[submodule "string-art-model/libraries/MCAD"]
+	path = string-art-model/libraries/MCAD
+	url = https://github.com/openscad/MCAD.git
+[submodule "string-art-model/libraries/sprockets"]
+	path = string-art-model/libraries/sprockets
+	url = https://github.com/dallenwilson/OpenSCAD-Sprockets.git

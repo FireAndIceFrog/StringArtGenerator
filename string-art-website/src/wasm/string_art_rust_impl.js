@@ -198,8 +198,16 @@ function debugString(val) {
     return className;
 }
 
-export function main() {
-    wasm.main();
+function _assertClass(instance, klass) {
+    if (!(instance instanceof klass)) {
+        throw new Error(`expected instance of ${klass.name}`);
+    }
+}
+
+function takeFromExternrefTable0(idx) {
+    const value = wasm.__wbindgen_export_2.get(idx);
+    wasm.__externref_table_dealloc(idx);
+    return value;
 }
 
 let cachedUint32ArrayMemory0 = null;
@@ -222,28 +230,6 @@ function passArray32ToWasm0(arg, malloc) {
     WASM_VECTOR_LEN = arg.length;
     return ptr;
 }
-
-function _assertClass(instance, klass) {
-    if (!(instance instanceof klass)) {
-        throw new Error(`expected instance of ${klass.name}`);
-    }
-}
-
-function takeFromExternrefTable0(idx) {
-    const value = wasm.__wbindgen_export_2.get(idx);
-    wasm.__externref_table_dealloc(idx);
-    return value;
-}
-/**
- * Utility functions for WASM
- * @param {string} message
- */
-export function log_to_console(message) {
-    const ptr0 = passStringToWasm0(message, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-    const len0 = WASM_VECTOR_LEN;
-    wasm.log_to_console(ptr0, len0);
-}
-
 /**
  * @returns {string}
  */
@@ -258,6 +244,36 @@ export function get_version() {
     } finally {
         wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
     }
+}
+
+/**
+ * Compute length from indices for WASM consumers.
+ * Returns NaN on error.
+ * @param {Uint32Array} path
+ * @param {number} num_nails
+ * @param {number} diameter_m
+ * @param {number} slack_pct
+ * @returns {number}
+ */
+export function compute_length_from_indices_wasm(path, num_nails, diameter_m, slack_pct) {
+    const ptr0 = passArray32ToWasm0(path, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.compute_length_from_indices_wasm(ptr0, len0, num_nails, diameter_m, slack_pct);
+    return ret;
+}
+
+/**
+ * Utility functions for WASM
+ * @param {string} message
+ */
+export function log_to_console(message) {
+    const ptr0 = passStringToWasm0(message, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    wasm.log_to_console(ptr0, len0);
+}
+
+export function main() {
+    wasm.main();
 }
 
 /**
@@ -281,8 +297,8 @@ function __wbg_adapter_28(arg0, arg1, arg2) {
     wasm.closure90_externref_shim(arg0, arg1, arg2);
 }
 
-function __wbg_adapter_95(arg0, arg1, arg2, arg3) {
-    wasm.closure639_externref_shim(arg0, arg1, arg2, arg3);
+function __wbg_adapter_82(arg0, arg1, arg2, arg3) {
+    wasm.closure641_externref_shim(arg0, arg1, arg2, arg3);
 }
 
 const ProgressInfoFinalization = (typeof FinalizationRegistry === 'undefined')
@@ -395,23 +411,36 @@ export class StringArtWasm {
         wasm.__wbg_stringartwasm_free(ptr, 0);
     }
     /**
-     * Create a new StringArtWasm instance from image data
-     * @param {Uint8Array} image_data
-     * @param {WasmStringArtConfig | null} [config]
+     * Get current configuration
+     * @returns {WasmStringArtConfig}
      */
-    constructor(image_data, config) {
-        let ptr0 = 0;
-        if (!isLikeNone(config)) {
-            _assertClass(config, WasmStringArtConfig);
-            ptr0 = config.__destroy_into_raw();
-        }
-        const ret = wasm.stringartwasm_new(image_data, ptr0);
-        if (ret[2]) {
-            throw takeFromExternrefTable0(ret[1]);
-        }
-        this.__wbg_ptr = ret[0] >>> 0;
-        StringArtWasmFinalization.register(this, this.__wbg_ptr, this);
-        return this;
+    get_config() {
+        const ret = wasm.stringartwasm_get_config(this.__wbg_ptr);
+        return WasmStringArtConfig.__wrap(ret);
+    }
+    /**
+     * Get the image size
+     * @returns {number}
+     */
+    get_image_size() {
+        const ret = wasm.stringartwasm_get_image_size(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * Get the total number of nails
+     * @returns {number}
+     */
+    get_nail_count() {
+        const ret = wasm.stringartwasm_get_nail_count(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * Get the current path as a JavaScript array
+     * @returns {Array<any>}
+     */
+    get_current_path() {
+        const ret = wasm.stringartwasm_get_current_path(this.__wbg_ptr);
+        return ret;
     }
     /**
      * Get nail coordinates as a JavaScript array
@@ -420,14 +449,6 @@ export class StringArtWasm {
     get_nail_coordinates() {
         const ret = wasm.stringartwasm_get_nail_coordinates(this.__wbg_ptr);
         return ret;
-    }
-    /**
-     * Get current configuration
-     * @returns {WasmStringArtConfig}
-     */
-    get_config() {
-        const ret = wasm.stringartwasm_get_config(this.__wbg_ptr);
-        return WasmStringArtConfig.__wrap(ret);
     }
     /**
      * Generate string art path with streaming progress updates
@@ -455,28 +476,23 @@ export class StringArtWasm {
         return ret;
     }
     /**
-     * Get the current path as a JavaScript array
-     * @returns {Array<any>}
+     * Create a new StringArtWasm instance from image data
+     * @param {Uint8Array} image_data
+     * @param {WasmStringArtConfig | null} [config]
      */
-    get_current_path() {
-        const ret = wasm.stringartwasm_get_current_path(this.__wbg_ptr);
-        return ret;
-    }
-    /**
-     * Get the total number of nails
-     * @returns {number}
-     */
-    get_nail_count() {
-        const ret = wasm.stringartwasm_get_nail_count(this.__wbg_ptr);
-        return ret >>> 0;
-    }
-    /**
-     * Get the image size
-     * @returns {number}
-     */
-    get_image_size() {
-        const ret = wasm.stringartwasm_get_image_size(this.__wbg_ptr);
-        return ret >>> 0;
+    constructor(image_data, config) {
+        let ptr0 = 0;
+        if (!isLikeNone(config)) {
+            _assertClass(config, WasmStringArtConfig);
+            ptr0 = config.__destroy_into_raw();
+        }
+        const ret = wasm.stringartwasm_new(image_data, ptr0);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        this.__wbg_ptr = ret[0] >>> 0;
+        StringArtWasmFinalization.register(this, this.__wbg_ptr, this);
+        return this;
     }
 }
 
@@ -506,6 +522,33 @@ export class WasmStringArtConfig {
     free() {
         const ptr = this.__destroy_into_raw();
         wasm.__wbg_wasmstringartconfig_free(ptr, 0);
+    }
+    /**
+     * @returns {WasmStringArtConfig}
+     */
+    static preset_fast() {
+        const ret = wasm.wasmstringartconfig_preset_fast();
+        return WasmStringArtConfig.__wrap(ret);
+    }
+    /**
+     * @returns {WasmStringArtConfig}
+     */
+    static preset_balanced() {
+        const ret = wasm.wasmstringartconfig_preset_balanced();
+        return WasmStringArtConfig.__wrap(ret);
+    }
+    /**
+     * @returns {WasmStringArtConfig}
+     */
+    static preset_high_quality() {
+        const ret = wasm.wasmstringartconfig_preset_high_quality();
+        return WasmStringArtConfig.__wrap(ret);
+    }
+    constructor() {
+        const ret = wasm.wasmstringartconfig_new();
+        this.__wbg_ptr = ret >>> 0;
+        WasmStringArtConfigFinalization.register(this, this.__wbg_ptr, this);
+        return this;
     }
     /**
      * @returns {number}
@@ -585,33 +628,6 @@ export class WasmStringArtConfig {
     set negative_space_threshold(arg0) {
         wasm.__wbg_set_wasmstringartconfig_negative_space_threshold(this.__wbg_ptr, arg0);
     }
-    constructor() {
-        const ret = wasm.wasmstringartconfig_new();
-        this.__wbg_ptr = ret >>> 0;
-        WasmStringArtConfigFinalization.register(this, this.__wbg_ptr, this);
-        return this;
-    }
-    /**
-     * @returns {WasmStringArtConfig}
-     */
-    static preset_fast() {
-        const ret = wasm.wasmstringartconfig_preset_fast();
-        return WasmStringArtConfig.__wrap(ret);
-    }
-    /**
-     * @returns {WasmStringArtConfig}
-     */
-    static preset_balanced() {
-        const ret = wasm.wasmstringartconfig_preset_balanced();
-        return WasmStringArtConfig.__wrap(ret);
-    }
-    /**
-     * @returns {WasmStringArtConfig}
-     */
-    static preset_high_quality() {
-        const ret = wasm.wasmstringartconfig_preset_high_quality();
-        return WasmStringArtConfig.__wrap(ret);
-    }
 }
 
 async function __wbg_load(module, imports) {
@@ -685,7 +701,7 @@ function __wbg_get_imports() {
                 const a = state0.a;
                 state0.a = 0;
                 try {
-                    return __wbg_adapter_95(a, state0.b, arg0, arg1);
+                    return __wbg_adapter_82(a, state0.b, arg0, arg1);
                 } finally {
                     state0.a = a;
                 }
@@ -784,7 +800,7 @@ function __wbg_get_imports() {
         const ret = false;
         return ret;
     };
-    imports.wbg.__wbindgen_closure_wrapper335 = function(arg0, arg1, arg2) {
+    imports.wbg.__wbindgen_closure_wrapper334 = function(arg0, arg1, arg2) {
         const ret = makeMutClosure(arg0, arg1, 91, __wbg_adapter_28);
         return ret;
     };
