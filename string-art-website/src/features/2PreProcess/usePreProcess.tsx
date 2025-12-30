@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch } from "../shared/redux/store";
 import { setImageUrl, setPreprocessedImageUrl } from "../shared/redux/stringArtSlice";
+import type { SelfieSegmentation } from "@mediapipe/selfie_segmentation"
 
 
 const TARGET_SIZE = 1080;
@@ -12,37 +13,24 @@ declare global {
   }
 }
 
-async function loadSelfieSegmentation(): Promise<any> {
-  if ((window as any).SelfieSegmentation) return (window as any).SelfieSegmentation;
-  return new Promise((resolve, reject) => {
-    const script = document.createElement("script");
-    script.src = "https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js";
-    script.async = true;
-    script.onload = () => {
-      resolve((window as any).SelfieSegmentation);
-    };
-    script.onerror = reject;
-    document.head.appendChild(script);
-  });
-}
-
 
 export const usePreProcess = () => {
     const dispatch = useDispatch<AppDispatch>();
     const imageUrl = useSelector((state: any) => state.stringArt.imageUrl || state.stringArt.preprocessedImageUrl);
     const [loading, setLoading] = useState(false);
     const [preview, setPreview] = useState<string | null>(null);
-    const selfieRef = useRef<any>(null);
+    const selfieRef = useRef<SelfieSegmentation | null>(null);
 
     useEffect(() => {
         // Lazy load SelfieSegmentation (cdn) — we'll use it after we have a crop
-        loadSelfieSegmentation()
-        .then((SelfieSegmentation) => {
+        import("@mediapipe/selfie_segmentation")
+        .then((SelfieSegmentationModule) => {
+            const SelfieSegmentation  = SelfieSegmentationModule.SelfieSegmentation
             selfieRef.current = new SelfieSegmentation({
             locateFile: (file: string) =>
                 `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`,
             });
-            selfieRef.current.setOptions({ modelSelection: 1 });
+            selfieRef.current.setOptions({ modelSelection: 0, selfieMode: true});
         })
         .catch((err) => {
             console.warn("Failed to load SelfieSegmentation", err);
