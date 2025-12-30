@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch } from "../shared/redux/store";
-import { setImageUrl, setPreprocessedImageUrl } from "../shared/redux/stringArtSlice";
+import { setImageUrl, setPreprocessedImageUrl, setImageData } from "../shared/redux/stringArtSlice";
 import type { SelfieSegmentation } from "@mediapipe/selfie_segmentation"
 
 
@@ -55,62 +55,62 @@ export const usePreProcess = () => {
         img.onerror = rej;
     });
 
-    const cropCanvas = document.createElement("canvas");
-    cropCanvas.width = TARGET_SIZE;
-    cropCanvas.height = TARGET_SIZE;
-    const ctx = cropCanvas.getContext("2d");
+    // Create a working canvas that preserves the source image aspect ratio (max dimension = TARGET_SIZE)
+    let workW = img.width;
+    let workH = img.height;
+    if (Math.max(workW, workH) > TARGET_SIZE) {
+        const s = TARGET_SIZE / Math.max(workW, workH);
+        workW = Math.round(workW * s);
+        workH = Math.round(workH * s);
+    }
+
+    const workCanvas = document.createElement("canvas");
+    workCanvas.width = workW;
+    workCanvas.height = workH;
+    const ctx = workCanvas.getContext("2d");
     if (!ctx) {
         setLoading(false);
         return;
     }
-    // draw full image to canvas preserving aspect ratio (letterbox)
-    const scale = Math.min(TARGET_SIZE / img.width, TARGET_SIZE / img.height);
-    const drawWidth = Math.round(img.width * scale);
-    const drawHeight = Math.round(img.height * scale);
-    const dx = Math.round((TARGET_SIZE - drawWidth) / 2);
-    const dy = Math.round((TARGET_SIZE - drawHeight) / 2);
-    // fill background white to avoid transparent borders
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, TARGET_SIZE, TARGET_SIZE);
-    ctx.drawImage(img, 0, 0, img.width, img.height, dx, dy, drawWidth, drawHeight);
+    // draw image scaled to work canvas (no letterboxing)
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(0, 0, workW, workH);
+    ctx.drawImage(img, 0, 0, workW, workH);
 
-    // Run selfie segmentation on the cropped canvas
+    // Run selfie segmentation on the same workCanvas we'll use for saving
     if (!selfieRef.current) {
-        console.warn("SelfieSegmentation not loaded; returning plain crop on white");
-        // Composite crop on white and return
+        console.warn("SelfieSegmentation not loaded; returning plain workCanvas on white");
         const whiteCanvas = document.createElement("canvas");
-        whiteCanvas.width = TARGET_SIZE;
-        whiteCanvas.height = TARGET_SIZE;
+        whiteCanvas.width = workW;
+        whiteCanvas.height = workH;
         const wctx = whiteCanvas.getContext("2d");
         if (!wctx) {
-        setLoading(false);
-        return;
+            setLoading(false);
+            return;
         }
-        wctx.fillStyle = "#ffffff";
-        wctx.fillRect(0, 0, TARGET_SIZE, TARGET_SIZE);
-        wctx.drawImage(cropCanvas, 0, 0);
+        wctx.fillStyle = "#000000";
+        wctx.fillRect(0, 0, workW, workH);
+        wctx.drawImage(workCanvas, 0, 0);
         const dataUrl = whiteCanvas.toDataURL("image/png");
         setPreview(dataUrl);
         setLoading(false);
         return;
     }
 
-    // SelfieSegmentation in browser: use onResults pattern; we will send the crop canvas as an ImageBitmap
     const segmentationResult = await new Promise<any>((resolve) => {
         (async () => {
-        selfieRef.current.onResults((results: any) => {
-            resolve(results);
-        });
-        // selfieRef expects an HTMLVideoElement/Image/Canvas; pass the cropCanvas
-        await selfieRef.current.send({ image: cropCanvas });
+            selfieRef.current?.onResults((results: any) => {
+                resolve(results);
+            });
+            // Pass the workCanvas (same image) to segmentation
+            await selfieRef.current?.send({ image: workCanvas });
         })();
     });
 
-    // segmentationResult.segmentationMask is an HTMLCanvas or ImageData depending on implementation;
-    // To be robust, draw the mask onto a temp canvas.
+    // Draw mask into a mask canvas matching work dimensions
     const maskCanvas = document.createElement("canvas");
-    maskCanvas.width = TARGET_SIZE;
-    maskCanvas.height = TARGET_SIZE;
+    maskCanvas.width = workW;
+    maskCanvas.height = workH;
     const mctx = maskCanvas.getContext("2d");
     if (!mctx) {
         setLoading(false);
@@ -118,55 +118,63 @@ export const usePreProcess = () => {
     }
 
     if (segmentationResult.segmentationMask) {
-        // draw mask to canvas
-        mctx.drawImage(segmentationResult.segmentationMask, 0, 0, TARGET_SIZE, TARGET_SIZE);
+        mctx.drawImage(segmentationResult.segmentationMask, 0, 0, workW, workH);
     } else if (segmentationResult.multiSegmentationMask) {
-        mctx.drawImage(segmentationResult.multiSegmentationMask[0], 0, 0, TARGET_SIZE, TARGET_SIZE);
+        mctx.drawImage(segmentationResult.multiSegmentationMask[0], 0, 0, workW, workH);
     } else if (segmentationResult.mask) {
-        // mask as float array: convert to ImageData
-        const imgData = mctx.createImageData(TARGET_SIZE, TARGET_SIZE);
-        const mask = segmentationResult.mask; // assume Float32Array or array of [0..1]
+        const imgData = mctx.createImageData(workW, workH);
+        const mask = segmentationResult.mask;
         for (let i = 0; i < mask.length && i * 4 < imgData.data.length; i++) {
-        const a = Math.round(Math.min(1, Math.max(0, mask[i])) * 255);
-        imgData.data[i * 4 + 0] = 255;
-        imgData.data[i * 4 + 1] = 255;
-        imgData.data[i * 4 + 2] = 255;
-        imgData.data[i * 4 + 3] = a;
+            const a = Math.round(Math.min(1, Math.max(0, mask[i])) * 255);
+            imgData.data[i * 4 + 0] = 0;
+            imgData.data[i * 4 + 1] = 0;
+            imgData.data[i * 4 + 2] = 0;
+            imgData.data[i * 4 + 3] = a;
         }
         mctx.putImageData(imgData, 0, 0);
     } else {
-        // unknown mask format, fallback
-        mctx.fillStyle = "#ffffff";
-        mctx.fillRect(0, 0, TARGET_SIZE, TARGET_SIZE);
+        mctx.fillStyle = "#000000";
+        mctx.fillRect(0, 0, workW, workH);
     }
 
-    // Optional: feather edges by applying a small blur filter to mask
-    // create final canvas: draw white background, then draw image masked by alpha
+    // create final canvas matching work dimensions and composite
     const finalCanvas = document.createElement("canvas");
-    finalCanvas.width = TARGET_SIZE;
-    finalCanvas.height = TARGET_SIZE;
+    finalCanvas.width = workW;
+    finalCanvas.height = workH;
     const fctx = finalCanvas.getContext("2d");
     if (!fctx) {
         setLoading(false);
         return;
     }
 
-    // Composite: draw white background and keep only foreground using the mask
-    // Paint white background first
-    fctx.fillStyle = "#ffffff";
-    fctx.fillRect(0, 0, TARGET_SIZE, TARGET_SIZE);
-    // Draw the crop image on top
-    fctx.drawImage(cropCanvas, 0, 0, TARGET_SIZE, TARGET_SIZE);
-    // Use mask to keep only foreground pixels (mask white = foreground)
+    fctx.fillStyle = "#000000";
+    fctx.fillRect(0, 0, workW, workH);
+    fctx.drawImage(workCanvas, 0, 0, workW, workH);
     fctx.globalCompositeOperation = 'destination-in';
-    fctx.drawImage(maskCanvas, 0, 0, TARGET_SIZE, TARGET_SIZE);
-    // Restore default composite mode
+    fctx.drawImage(maskCanvas, 0, 0, workW, workH);
+
+    // Ensure background (outside the mask) is black by painting black beneath transparent areas
+    fctx.globalCompositeOperation = 'destination-over';
+    fctx.fillStyle = "#000000";
+    fctx.fillRect(0, 0, workW, workH);
     fctx.globalCompositeOperation = 'source-over';
 
-    // Convert final canvas to data URL
     const finalDataUrl = finalCanvas.toDataURL("image/png");
     setPreview(finalDataUrl);
-    // Automatically set the preprocessed image as the image to process
+    // Convert canvas to Uint8Array (no fetch needed) and set as imageData so the WASM worker receives the preprocessed image
+    try {
+        const blob: Blob | null = await new Promise((resolve) => finalCanvas.toBlob((b) => resolve(b)));
+        if (blob) {
+            const arrayBuffer = await blob.arrayBuffer();
+            const u8 = new Uint8Array(arrayBuffer);
+            dispatch(setImageData(u8));
+        } else {
+            console.warn("Canvas.toBlob returned null");
+        }
+    } catch (err) {
+        console.warn("Failed to convert canvas to Uint8Array", err);
+    }
+    // Automatically set the preprocessed image as the image to process (URL copies for UI)
     dispatch(setImageUrl(finalDataUrl));
     dispatch(setPreprocessedImageUrl(finalDataUrl));
     setLoading(false);
