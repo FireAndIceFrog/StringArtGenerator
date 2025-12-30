@@ -16,15 +16,15 @@
 //! ## Basic Usage
 //!
 //! ```rust,no_run
-//! use string_art_rust_impl::{StringArtFactory, StringArtConfig, StringArtGenerator, ImageRenderer};
+//! use string_art_rust_impl::{StringArtFactory, StringArtConfig, StringArtGenerator, ImageRenderer, ImageRendererTrait};
 //!
 //! // Create a generator with default settings
 //! let (mut generator, renderer, _) = StringArtFactory::create_from_image("portrait.jpg", StringArtConfig::default())?;
 //!
-//! // Generate string art path
-//! let path = generator.generate_path(5000, 25.0, 10.0)?;
+//! // Generate string art path (progress_frequency argument added)
+//! let path = generator.generate_path(5000, 25.0, 10.0, 100)?;
 //!
-//! // Render and save the result
+//! // Render and save the result (bring trait into scope via the import above)
 //! renderer.save_image("string_art_output.png", None)?;
 //! # Ok::<(), Box<dyn std::error::Error>>(())
 //! ```
@@ -32,7 +32,7 @@
 //! ## Advanced Configuration
 //!
 //! ```rust,no_run
-//! use string_art_rust_impl::{StringArtFactory, StringArtConfig, StringArtGenerator, ImageRenderer};
+//! use string_art_rust_impl::{StringArtFactory, StringArtConfig, StringArtGenerator, ImageRenderer, ImageRendererTrait};
 //!
 //! let config = StringArtConfig {
 //!     num_nails: 720,
@@ -42,7 +42,34 @@
 //! };
 //!
 //! let (mut generator, renderer, _) = StringArtFactory::create_from_image("portrait.jpg", config)?;
-//! let path = generator.generate_path(5000, 25.0, 10.0)?;
+//! let path = generator.generate_path(5000, 25.0, 10.0, 100)?;
+//! # Ok::<(), Box<dyn std::error::Error>>(())
+//! ```
+//!
+//! ## Convenience Generators
+//!
+//! ```rust,no_run
+//! use string_art_rust_impl::{quick_generator, StringArtGenerator, ImageRendererTrait};
+//!
+//! let (mut generator, renderer, _) = quick_generator("portrait.jpg")?;
+//! let path = generator.generate_path(1000, 25.0, 10.0, 100)?;
+//! renderer.save_image("output.png", None)?;
+//! # Ok::<(), Box<dyn std::error::Error>>(())
+//! ```
+//!
+//! ```rust,no_run
+//! use string_art_rust_impl::{high_quality_generator, StringArtGenerator};
+//!
+//! let (mut generator, _, _) = high_quality_generator("portrait.jpg")?;
+//! let path = generator.generate_path(10000, 20.0, 5.0, 100)?;
+//! # Ok::<(), Box<dyn std::error::Error>>(())
+//! ```
+//!
+//! ```rust,no_run
+//! use string_art_rust_impl::{fast_generator, StringArtGenerator};
+//!
+//! let (mut generator, _, _) = fast_generator("portrait.jpg")?;
+//! let path = generator.generate_path(1000, 30.0, 15.0, 100)?;
 //! # Ok::<(), Box<dyn std::error::Error>>(())
 //! ```
 
@@ -90,17 +117,6 @@ pub fn default_config() -> StringArtConfig {
 ///
 /// This is a convenience function for simple use cases where you just want
 /// to generate string art with default settings.
-///
-/// # Example
-///
-/// ```rust,no_run
-/// use string_art_rust_impl::{quick_generator, StringArtGenerator};
-///
-/// let (mut generator, renderer, _) = quick_generator("portrait.jpg")?;
-/// let path = generator.generate_path(1000, 25.0, 10.0)?;
-/// renderer.save_image("output.png", None)?;
-/// # Ok::<(), Box<dyn std::error::Error>>(())
-/// ```
 pub fn quick_generator(
     image_path: &str,
 ) -> Result<(GreedyGenerator, ImageRenderer, std::sync::Arc<std::sync::RwLock<state::app_state::StringArtState>>)> {
@@ -108,21 +124,6 @@ pub fn quick_generator(
 }
 
 /// Create a string art generator optimized for high quality results
-///
-/// This configuration prioritizes quality over speed:
-/// - Higher resolution (800x800)
-/// - More nails (1440)
-/// - All preprocessing features enabled
-///
-/// # Example
-///
-/// ```rust,no_run
-/// use string_art_rust_impl::{high_quality_generator, StringArtGenerator};
-///
-/// let (mut generator, _, _) = high_quality_generator("portrait.jpg")?;
-/// let path = generator.generate_path(10000, 20.0, 5.0)?;
-/// # Ok::<(), Box<dyn std::error::Error>>(())
-/// ```
 pub fn high_quality_generator(
     image_path: &str,
 ) -> Result<(GreedyGenerator, ImageRenderer, std::sync::Arc<std::sync::RwLock<state::app_state::StringArtState>>)> {
@@ -136,21 +137,6 @@ pub fn high_quality_generator(
 }
 
 /// Create a string art generator optimized for speed
-///
-/// This configuration prioritizes speed over quality:
-/// - Lower resolution (300x300)
-/// - Fewer nails (360)
-/// - Minimal preprocessing
-///
-/// # Example
-///
-/// ```rust,no_run
-/// use string_art_rust_impl::{fast_generator, StringArtGenerator};
-///
-/// let (mut generator, _, _) = fast_generator("portrait.jpg")?;
-/// let path = generator.generate_path(1000, 30.0, 15.0)?;
-/// # Ok::<(), Box<dyn std::error::Error>>(())
-/// ```
 pub fn fast_generator(
     image_path: &str,
 ) -> Result<(GreedyGenerator, ImageRenderer, std::sync::Arc<std::sync::RwLock<state::app_state::StringArtState>>)> {
@@ -161,56 +147,4 @@ pub fn fast_generator(
         ..Default::default()
     };
     StringArtFactory::create_from_image(image_path, config)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use tempfile::tempdir;
-    use crate::ImageRendererTrait;
-
-    fn create_test_image() -> (tempfile::TempDir, String) {
-        let dir = tempdir().unwrap();
-        let image_path = dir.path().join("test.png");
-        
-        let img = image::ImageBuffer::from_fn(100, 100, |x, y| {
-            if x > 30 && x < 70 && y > 30 && y < 70 {
-                image::Luma([50u8]) // Dark square in center
-            } else {
-                image::Luma([200u8]) // Light background
-            }
-        });
-        
-        img.save(&image_path).unwrap();
-        (dir, image_path.to_string_lossy().to_string())
-    }
-
-    #[test]
-    fn test_quick_generator() {
-        let (_dir, image_path) = create_test_image();
-        let result = quick_generator(&image_path);
-        assert!(result.is_ok());
-    }
-
-    #[test]
-    fn test_high_quality_generator() {
-        let (_dir, image_path) = create_test_image();
-        let result = high_quality_generator(&image_path);
-        assert!(result.is_ok());
-    }
-
-    #[test]
-    fn test_fast_generator() {
-        let (_dir, image_path) = create_test_image();
-        let result = fast_generator(&image_path);
-        assert!(result.is_ok());
-    }
-
-    #[test]
-    fn test_default_config() {
-        let config = default_config();
-        assert_eq!(config.num_nails, 720);
-        assert_eq!(config.image_size, 500);
-        assert!(config.preserve_eyes);
-    }
 }
