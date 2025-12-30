@@ -10,11 +10,11 @@ const minMaxVals: Record<
 > = {
   //min, max, step
   image_size: [500, 2000, 100],
-  line_darkness: [25, 300, 5],
+  line_darkness: [5, 150, 5],
   max_lines: [800, 5000, 100],
-  min_improvement_score: [0, 100, 1],
-  negative_space_penalty: [0, 100, 1],
-  negative_space_threshold: [0, 100, 1],
+  min_improvement_score: [0, 15, 0.5],
+  negative_space_penalty: [0, 15, 1],
+  negative_space_threshold: [0, 255, 1],
   num_nails: [120, 1440, 20],
   progress_frequency: [200, 500, 50],
 };

@@ -6,7 +6,7 @@ import type { SelfieSegmentation } from "@mediapipe/selfie_segmentation"
 
 
 const TARGET_SIZE = 1080;
-
+const FILL_COLOUR = "#eaeaeaff";
 declare global {
   interface Window {
     SelfieSegmentation?: any;
@@ -73,7 +73,7 @@ export const usePreProcess = () => {
         return;
     }
     // draw image scaled to work canvas (no letterboxing)
-    ctx.fillStyle = "#000000";
+    ctx.fillStyle = FILL_COLOUR;
     ctx.fillRect(0, 0, workW, workH);
     ctx.drawImage(img, 0, 0, workW, workH);
 
@@ -88,7 +88,7 @@ export const usePreProcess = () => {
             setLoading(false);
             return;
         }
-        wctx.fillStyle = "#000000";
+        wctx.fillStyle = FILL_COLOUR;
         wctx.fillRect(0, 0, workW, workH);
         wctx.drawImage(workCanvas, 0, 0);
         const dataUrl = whiteCanvas.toDataURL("image/png");
@@ -124,16 +124,18 @@ export const usePreProcess = () => {
     } else if (segmentationResult.mask) {
         const imgData = mctx.createImageData(workW, workH);
         const mask = segmentationResult.mask;
+        const [red, green, blue] = FILL_COLOUR.match(/\w\w/g)?.map((c) => parseInt(c, 16)) || [0,0,0];
+
         for (let i = 0; i < mask.length && i * 4 < imgData.data.length; i++) {
             const a = Math.round(Math.min(1, Math.max(0, mask[i])) * 255);
-            imgData.data[i * 4 + 0] = 0;
-            imgData.data[i * 4 + 1] = 0;
-            imgData.data[i * 4 + 2] = 0;
+            imgData.data[i * 4 + 0] = red;
+            imgData.data[i * 4 + 1] = green;
+            imgData.data[i * 4 + 2] = blue;
             imgData.data[i * 4 + 3] = a;
         }
         mctx.putImageData(imgData, 0, 0);
     } else {
-        mctx.fillStyle = "#000000";
+        mctx.fillStyle = FILL_COLOUR;
         mctx.fillRect(0, 0, workW, workH);
     }
 
@@ -147,7 +149,7 @@ export const usePreProcess = () => {
         return;
     }
 
-    fctx.fillStyle = "#000000";
+    fctx.fillStyle = FILL_COLOUR;
     fctx.fillRect(0, 0, workW, workH);
     fctx.drawImage(workCanvas, 0, 0, workW, workH);
     fctx.globalCompositeOperation = 'destination-in';
@@ -155,7 +157,7 @@ export const usePreProcess = () => {
 
     // Ensure background (outside the mask) is black by painting black beneath transparent areas
     fctx.globalCompositeOperation = 'destination-over';
-    fctx.fillStyle = "#000000";
+    fctx.fillStyle = FILL_COLOUR;
     fctx.fillRect(0, 0, workW, workH);
     fctx.globalCompositeOperation = 'source-over';
 

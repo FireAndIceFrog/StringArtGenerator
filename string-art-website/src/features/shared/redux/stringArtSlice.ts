@@ -34,10 +34,10 @@ const initialState: StringArtState = {
   settings: {
     num_nails: 360,
     image_size: 500,
-    preserve_eyes: true,
+    preserve_eyes: false,
     preserve_negative_space: true,
     negative_space_penalty: 5,
-    negative_space_threshold: 0.5,
+    negative_space_threshold: 128,
     max_lines: 2000,
     line_darkness: 100,
     min_improvement_score: 15,
