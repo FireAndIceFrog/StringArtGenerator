@@ -1,11 +1,11 @@
 /* tslint:disable */
 /* eslint-disable */
-export function main(): void;
+export function get_version(): string;
 /**
  * Utility functions for WASM
  */
 export function log_to_console(message: string): void;
-export function get_version(): string;
+export function main(): void;
 /**
  * Test function to verify WASM is working
  */
@@ -28,17 +28,25 @@ export class ProgressInfo {
 export class StringArtWasm {
   free(): void;
   /**
-   * Create a new StringArtWasm instance from image data
+   * Get current configuration
    */
-  constructor(image_data: Uint8Array, config?: WasmStringArtConfig | null);
+  get_config(): WasmStringArtConfig;
+  /**
+   * Get the image size
+   */
+  get_image_size(): number;
+  /**
+   * Get the total number of nails
+   */
+  get_nail_count(): number;
+  /**
+   * Get the current path as a JavaScript array
+   */
+  get_current_path(): Array<any>;
   /**
    * Get nail coordinates as a JavaScript array
    */
   get_nail_coordinates(): Array<any>;
-  /**
-   * Get current configuration
-   */
-  get_config(): WasmStringArtConfig;
   /**
    * Generate string art path with streaming progress updates
    */
@@ -48,27 +56,19 @@ export class StringArtWasm {
    */
   generate_path_streaming_with_frequency(max_lines: number, line_darkness: number, min_improvement_score: number, progress_frequency: number, progress_callback: Function): Promise<any>;
   /**
-   * Get the current path as a JavaScript array
+   * Create a new StringArtWasm instance from image data
    */
-  get_current_path(): Array<any>;
-  /**
-   * Get the total number of nails
-   */
-  get_nail_count(): number;
-  /**
-   * Get the image size
-   */
-  get_image_size(): number;
+  constructor(image_data: Uint8Array, config?: WasmStringArtConfig | null);
 }
 /**
  * Configuration object for WASM interface
  */
 export class WasmStringArtConfig {
   free(): void;
-  constructor();
   static preset_fast(): WasmStringArtConfig;
   static preset_balanced(): WasmStringArtConfig;
   static preset_high_quality(): WasmStringArtConfig;
+  constructor();
   num_nails: number;
   image_size: number;
   preserve_eyes: boolean;
@@ -81,46 +81,46 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 
 export interface InitOutput {
   readonly memory: WebAssembly.Memory;
-  readonly __wbg_wasmstringartconfig_free: (a: number, b: number) => void;
-  readonly __wbg_get_wasmstringartconfig_num_nails: (a: number) => number;
-  readonly __wbg_set_wasmstringartconfig_num_nails: (a: number, b: number) => void;
-  readonly __wbg_get_wasmstringartconfig_image_size: (a: number) => number;
-  readonly __wbg_set_wasmstringartconfig_image_size: (a: number, b: number) => void;
-  readonly __wbg_get_wasmstringartconfig_preserve_eyes: (a: number) => number;
-  readonly __wbg_set_wasmstringartconfig_preserve_eyes: (a: number, b: number) => void;
-  readonly __wbg_get_wasmstringartconfig_preserve_negative_space: (a: number) => number;
-  readonly __wbg_set_wasmstringartconfig_preserve_negative_space: (a: number, b: number) => void;
-  readonly __wbg_get_wasmstringartconfig_negative_space_penalty: (a: number) => number;
-  readonly __wbg_set_wasmstringartconfig_negative_space_penalty: (a: number, b: number) => void;
-  readonly __wbg_get_wasmstringartconfig_negative_space_threshold: (a: number) => number;
-  readonly __wbg_set_wasmstringartconfig_negative_space_threshold: (a: number, b: number) => void;
-  readonly wasmstringartconfig_new: () => number;
-  readonly wasmstringartconfig_preset_fast: () => number;
-  readonly wasmstringartconfig_preset_balanced: () => number;
-  readonly wasmstringartconfig_preset_high_quality: () => number;
-  readonly __wbg_progressinfo_free: (a: number, b: number) => void;
-  readonly __wbg_get_progressinfo_lines_completed: (a: number) => number;
-  readonly __wbg_set_progressinfo_lines_completed: (a: number, b: number) => void;
-  readonly __wbg_get_progressinfo_total_lines: (a: number) => number;
-  readonly __wbg_set_progressinfo_total_lines: (a: number, b: number) => void;
-  readonly __wbg_get_progressinfo_current_path: (a: number) => [number, number];
-  readonly __wbg_set_progressinfo_current_path: (a: number, b: number, c: number) => void;
-  readonly __wbg_get_progressinfo_score: (a: number) => number;
-  readonly __wbg_set_progressinfo_score: (a: number, b: number) => void;
   readonly __wbg_get_progressinfo_completion_percent: (a: number) => number;
+  readonly __wbg_get_progressinfo_current_path: (a: number) => [number, number];
+  readonly __wbg_get_progressinfo_lines_completed: (a: number) => number;
+  readonly __wbg_get_progressinfo_score: (a: number) => number;
+  readonly __wbg_get_progressinfo_total_lines: (a: number) => number;
+  readonly __wbg_get_wasmstringartconfig_image_size: (a: number) => number;
+  readonly __wbg_get_wasmstringartconfig_negative_space_penalty: (a: number) => number;
+  readonly __wbg_get_wasmstringartconfig_negative_space_threshold: (a: number) => number;
+  readonly __wbg_get_wasmstringartconfig_num_nails: (a: number) => number;
+  readonly __wbg_get_wasmstringartconfig_preserve_eyes: (a: number) => number;
+  readonly __wbg_get_wasmstringartconfig_preserve_negative_space: (a: number) => number;
+  readonly __wbg_progressinfo_free: (a: number, b: number) => void;
   readonly __wbg_set_progressinfo_completion_percent: (a: number, b: number) => void;
+  readonly __wbg_set_progressinfo_current_path: (a: number, b: number, c: number) => void;
+  readonly __wbg_set_progressinfo_lines_completed: (a: number, b: number) => void;
+  readonly __wbg_set_progressinfo_score: (a: number, b: number) => void;
+  readonly __wbg_set_progressinfo_total_lines: (a: number, b: number) => void;
+  readonly __wbg_set_wasmstringartconfig_image_size: (a: number, b: number) => void;
+  readonly __wbg_set_wasmstringartconfig_negative_space_penalty: (a: number, b: number) => void;
+  readonly __wbg_set_wasmstringartconfig_negative_space_threshold: (a: number, b: number) => void;
+  readonly __wbg_set_wasmstringartconfig_num_nails: (a: number, b: number) => void;
+  readonly __wbg_set_wasmstringartconfig_preserve_eyes: (a: number, b: number) => void;
+  readonly __wbg_set_wasmstringartconfig_preserve_negative_space: (a: number, b: number) => void;
   readonly __wbg_stringartwasm_free: (a: number, b: number) => void;
-  readonly stringartwasm_new: (a: any, b: number) => [number, number, number];
-  readonly stringartwasm_get_nail_coordinates: (a: number) => any;
-  readonly stringartwasm_get_config: (a: number) => number;
+  readonly __wbg_wasmstringartconfig_free: (a: number, b: number) => void;
+  readonly get_version: () => [number, number];
+  readonly log_to_console: (a: number, b: number) => void;
   readonly stringartwasm_generate_path_streaming: (a: number, b: number, c: number, d: number, e: any) => any;
   readonly stringartwasm_generate_path_streaming_with_frequency: (a: number, b: number, c: number, d: number, e: number, f: any) => any;
+  readonly stringartwasm_get_config: (a: number) => number;
   readonly stringartwasm_get_current_path: (a: number) => any;
-  readonly stringartwasm_get_nail_count: (a: number) => number;
   readonly stringartwasm_get_image_size: (a: number) => number;
-  readonly log_to_console: (a: number, b: number) => void;
-  readonly get_version: () => [number, number];
+  readonly stringartwasm_get_nail_coordinates: (a: number) => any;
+  readonly stringartwasm_get_nail_count: (a: number) => number;
+  readonly stringartwasm_new: (a: any, b: number) => [number, number, number];
   readonly test_wasm: () => [number, number];
+  readonly wasmstringartconfig_new: () => number;
+  readonly wasmstringartconfig_preset_balanced: () => number;
+  readonly wasmstringartconfig_preset_fast: () => number;
+  readonly wasmstringartconfig_preset_high_quality: () => number;
   readonly main: () => void;
   readonly __wbindgen_exn_store: (a: number) => void;
   readonly __externref_table_alloc: () => number;
@@ -131,7 +131,7 @@ export interface InitOutput {
   readonly __wbindgen_export_6: WebAssembly.Table;
   readonly __externref_table_dealloc: (a: number) => void;
   readonly closure90_externref_shim: (a: number, b: number, c: any) => void;
-  readonly closure639_externref_shim: (a: number, b: number, c: any, d: any) => void;
+  readonly closure641_externref_shim: (a: number, b: number, c: any, d: any) => void;
   readonly __wbindgen_start: () => void;
 }
 

@@ -55,6 +55,7 @@ pub mod rendering;
 pub mod state;
 pub mod traits;
 pub mod utils;
+pub mod post_processing;
 
 #[cfg(feature = "wasm")]
 pub mod wasm;
@@ -166,8 +167,9 @@ pub fn fast_generator(
 mod tests {
     use super::*;
     use tempfile::tempdir;
+    use crate::ImageRendererTrait;
 
-    fn create_test_image() -> String {
+    fn create_test_image() -> (tempfile::TempDir, String) {
         let dir = tempdir().unwrap();
         let image_path = dir.path().join("test.png");
         
@@ -180,26 +182,26 @@ mod tests {
         });
         
         img.save(&image_path).unwrap();
-        image_path.to_string_lossy().to_string()
+        (dir, image_path.to_string_lossy().to_string())
     }
 
     #[test]
     fn test_quick_generator() {
-        let image_path = create_test_image();
+        let (_dir, image_path) = create_test_image();
         let result = quick_generator(&image_path);
         assert!(result.is_ok());
     }
 
     #[test]
     fn test_high_quality_generator() {
-        let image_path = create_test_image();
+        let (_dir, image_path) = create_test_image();
         let result = high_quality_generator(&image_path);
         assert!(result.is_ok());
     }
 
     #[test]
     fn test_fast_generator() {
-        let image_path = create_test_image();
+        let (_dir, image_path) = create_test_image();
         let result = fast_generator(&image_path);
         assert!(result.is_ok());
     }
