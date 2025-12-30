@@ -247,6 +247,22 @@ export function get_version() {
 }
 
 /**
+ * Compute length from indices for WASM consumers.
+ * Returns NaN on error.
+ * @param {Uint32Array} path
+ * @param {number} num_nails
+ * @param {number} diameter_m
+ * @param {number} slack_pct
+ * @returns {number}
+ */
+export function compute_length_from_indices_wasm(path, num_nails, diameter_m, slack_pct) {
+    const ptr0 = passArray32ToWasm0(path, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.compute_length_from_indices_wasm(ptr0, len0, num_nails, diameter_m, slack_pct);
+    return ret;
+}
+
+/**
  * Utility functions for WASM
  * @param {string} message
  */
@@ -281,7 +297,7 @@ function __wbg_adapter_28(arg0, arg1, arg2) {
     wasm.closure90_externref_shim(arg0, arg1, arg2);
 }
 
-function __wbg_adapter_81(arg0, arg1, arg2, arg3) {
+function __wbg_adapter_82(arg0, arg1, arg2, arg3) {
     wasm.closure641_externref_shim(arg0, arg1, arg2, arg3);
 }
 
@@ -685,7 +701,7 @@ function __wbg_get_imports() {
                 const a = state0.a;
                 state0.a = 0;
                 try {
-                    return __wbg_adapter_81(a, state0.b, arg0, arg1);
+                    return __wbg_adapter_82(a, state0.b, arg0, arg1);
                 } finally {
                     state0.a = a;
                 }
@@ -784,7 +800,7 @@ function __wbg_get_imports() {
         const ret = false;
         return ret;
     };
-    imports.wbg.__wbindgen_closure_wrapper333 = function(arg0, arg1, arg2) {
+    imports.wbg.__wbindgen_closure_wrapper334 = function(arg0, arg1, arg2) {
         const ret = makeMutClosure(arg0, arg1, 91, __wbg_adapter_28);
         return ret;
     };

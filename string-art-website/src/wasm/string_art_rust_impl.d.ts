@@ -2,6 +2,11 @@
 /* eslint-disable */
 export function get_version(): string;
 /**
+ * Compute length from indices for WASM consumers.
+ * Returns NaN on error.
+ */
+export function compute_length_from_indices_wasm(path: Uint32Array, num_nails: number, diameter_m: number, slack_pct: number): number;
+/**
  * Utility functions for WASM
  */
 export function log_to_console(message: string): void;
@@ -106,6 +111,7 @@ export interface InitOutput {
   readonly __wbg_set_wasmstringartconfig_preserve_negative_space: (a: number, b: number) => void;
   readonly __wbg_stringartwasm_free: (a: number, b: number) => void;
   readonly __wbg_wasmstringartconfig_free: (a: number, b: number) => void;
+  readonly compute_length_from_indices_wasm: (a: number, b: number, c: number, d: number, e: number) => number;
   readonly get_version: () => [number, number];
   readonly log_to_console: (a: number, b: number) => void;
   readonly stringartwasm_generate_path_streaming: (a: number, b: number, c: number, d: number, e: any) => any;

@@ -8,6 +8,7 @@ import {
 import StringArtConfigSection from "./components/StringArtConfig/StringArtConfigSection";
 import { StringArtCanvas } from "./components/StringArtCanvas/StringArtCanvas";
 import { useTranslation } from 'react-i18next';
+import { StringArtLineLengthSection } from './components/StringArtLineLength/StringArtLineLengthSection';
 
 const RenderImageScreen = forwardRef<HTMLCanvasElement>((_, ref) => {
   const dispatch = useDispatch<AppDispatch>();
@@ -31,6 +32,7 @@ const RenderImageScreen = forwardRef<HTMLCanvasElement>((_, ref) => {
         {imageData && (
           <div className="generation-controls">
             <StringArtConfigSection key={"stringArt"} />
+            <StringArtLineLengthSection />
 
             <button
               onClick={handleStartGeneration}
@@ -71,7 +73,7 @@ const RenderImageScreen = forwardRef<HTMLCanvasElement>((_, ref) => {
               width={500}
               height={500}
             />
-          </div>
+      </div>
     </main>
   );
 });

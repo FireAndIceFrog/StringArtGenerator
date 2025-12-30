@@ -26,6 +26,7 @@ export const __wbg_set_wasmstringartconfig_preserve_eyes: (a: number, b: number)
 export const __wbg_set_wasmstringartconfig_preserve_negative_space: (a: number, b: number) => void;
 export const __wbg_stringartwasm_free: (a: number, b: number) => void;
 export const __wbg_wasmstringartconfig_free: (a: number, b: number) => void;
+export const compute_length_from_indices_wasm: (a: number, b: number, c: number, d: number, e: number) => number;
 export const get_version: () => [number, number];
 export const log_to_console: (a: number, b: number) => void;
 export const stringartwasm_generate_path_streaming: (a: number, b: number, c: number, d: number, e: any) => any;
