@@ -6,6 +6,7 @@ import StepLabel from '@mui/material/StepLabel';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import UploadScreen from '../1Upload/UploadScreen';
+import PreProcessScreen from '../2PreProcess/PreProcessScreen';
 import RenderImageScreen from '../3RenderImage/RenderImageScreen';
 import { useSelector } from 'react-redux';
 import { type StringArtState } from '../shared/redux/stringArtSlice';
@@ -14,7 +15,11 @@ import { useTranslation } from 'react-i18next';
 
 export default function StepperScreen() {
   const i18next = useTranslation();
-  const steps = [i18next.t('Upload Image'), i18next.t('Render String Art')];
+  const steps = [
+    i18next.t('Upload Image'),
+    i18next.t('Preprocess Image'),
+    i18next.t('Render String Art'),
+  ];
   const [activeStep, setActiveStep] = React.useState(0);
   const { imageData, currentPath } = useSelector((state: { stringArt: StringArtState }) => state.stringArt);
   const renderImageScreenRef = React.useRef<HTMLCanvasElement>(null);
@@ -102,7 +107,8 @@ export default function StepperScreen() {
       ) : (
         <React.Fragment>
           {activeStep === 0 && <UploadScreen onImageSelected={handleNext} />}
-          {activeStep === 1 && <RenderImageScreen ref={renderImageScreenRef} />}
+          {activeStep === 1 && <PreProcessScreen />}
+          {activeStep === 2 && <RenderImageScreen ref={renderImageScreenRef} />}
           <Box sx={{ display: 'flex', flexDirection: 'row', pt: 2 }}>
             <Button
               color="inherit"

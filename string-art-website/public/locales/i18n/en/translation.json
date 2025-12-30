@@ -27,6 +27,14 @@
   "Lines ": "Lines ",
   "Score ": "Score ",
   "Upload Image": "Upload Image",
+  "Preprocess Image": "Preprocess Image",
+  "Run Preprocess": "Run Preprocess",
+  "Processing...": "Processing...",
+  "Source Image": "Source Image",
+  "Preprocessed Preview": "Preprocessed Preview",
+  "Use Preprocessed Image": "Use Preprocessed Image",
+  "Clear": "Clear",
+  "No preview yet": "No preview yet",
   "Render String Art": "Render String Art",
   "All steps completed - you're finished": "All steps completed - you're finished",
   "Download Image": "Download Image",
@@ -36,5 +44,6 @@
   "Line length diameter Label": "Line length diameter (m): ",
   "Line length output label": "Estimated line length: ",
   "Line length calculating label": "Calculating line length...",
-  "Line length title": "Estimated Line Length"
+  "Line length title": "Estimated Line Length",
+  "PreProcessBlurb": "This is your processed image, the background is removed."
 }

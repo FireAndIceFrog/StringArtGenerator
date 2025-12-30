@@ -15,6 +15,7 @@
     "@emotion/styled": "^11.14.1",
     "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
     "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
+    "@mediapipe/tasks-vision": "^0.10.22-rc.20250304",
     "@mui/material": "^7.3.1",
     "@reduxjs/toolkit": "^2.8.2",
     "i18next-browser-languagedetector": "^8.2.0",

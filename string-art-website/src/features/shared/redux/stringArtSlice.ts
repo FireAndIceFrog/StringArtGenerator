@@ -7,6 +7,8 @@ import type { ProgressInfo } from '../../../wasm/string_art_rust_impl';
 export interface StringArtState {
   imageData: Uint8Array | null;
   imageUrl: string;
+  preprocessedImageUrl: string;
+  preprocessedParams: any;
   isGenerating: boolean;
   currentPath: number[];
   nailCoords: Array<[number, number]>;
@@ -21,6 +23,8 @@ interface StrinArtThunkProperties { imageData: Uint8Array; settings: StringArtCo
 const initialState: StringArtState = {
   imageData: null,
   imageUrl: '',
+  preprocessedImageUrl: '',
+  preprocessedParams: null,
   isGenerating: false,
   currentPath: [],
   nailCoords: [],
@@ -46,7 +50,7 @@ export const generateStringArtThunk = createAsyncThunk(
   'stringArt/generate',
   async (
     { imageData, settings }: StrinArtThunkProperties,
-    {dispatch}
+    { dispatch }
   ) => {
     return await generateStringArt(
       settings,
@@ -62,7 +66,7 @@ export const generateStringArtThunk = createAsyncThunk(
   }
 );
 
-// Actions for async generation will be added later via thunk
+// Redux slice
 const stringArtSlice = createSlice({
   name: 'stringArt',
   initialState,
@@ -85,9 +89,17 @@ const stringArtSlice = createSlice({
     setSettings(state: StringArtState, action: PayloadAction<StringArtConfig>) {
       state.settings = action.payload;
     },
+    setPreprocessedImageUrl(state: StringArtState, action: PayloadAction<string>) {
+      state.preprocessedImageUrl = action.payload;
+    },
+    setPreprocessedParams(state: StringArtState, action: PayloadAction<any>) {
+      state.preprocessedParams = action.payload;
+    },
     resetState(state: StringArtState) {
       state.imageData = null;
       state.imageUrl = '';
+      state.preprocessedImageUrl = '';
+      state.preprocessedParams = null;
       state.isGenerating = false;
       state.currentPath = [];
       state.nailCoords = [];
@@ -113,11 +125,16 @@ const stringArtSlice = createSlice({
   },
 });
 
+export const selectPreprocessedImageUrl = (state: { stringArt: StringArtState }) => state.stringArt.preprocessedImageUrl;
+export const selectPreprocessedParams = (state: { stringArt: StringArtState }) => state.stringArt.preprocessedParams;
+
 export const {
   setImageData,
   setImageUrl,
   setIsLoading,
   setSettings,
+  setPreprocessedImageUrl,
+  setPreprocessedParams,
   resetState,
   appendToCurrentPath,
   setNailCoords,
