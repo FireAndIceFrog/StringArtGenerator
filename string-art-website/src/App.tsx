@@ -4,8 +4,6 @@ import StepperScreen from './features/Stepper/StepperScreen';
 import {
   type StringArtState
 } from './features/shared/redux/stringArtSlice';
-import { ThemeProvider } from '@mui/material/styles';
-import theme from './theme';
 import {useTranslation} from 'react-i18next';
 function App() {
   const {
@@ -34,7 +32,6 @@ function App() {
   }
 
   return (
-    <ThemeProvider theme={theme}>
       <div className="app">
         <header className="app-header">
           <h1>{i18next.t('String Art Generator')}</h1>
@@ -43,7 +40,6 @@ function App() {
 
         <StepperScreen />
       </div>
-    </ThemeProvider>
   );
 }
 

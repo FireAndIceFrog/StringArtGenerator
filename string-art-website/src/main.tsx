@@ -1,5 +1,5 @@
  // main.tsx
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Provider } from 'react-redux';
 import { store } from './features/shared/redux/store';

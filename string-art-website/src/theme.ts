@@ -1,4 +1,5 @@
 import { createTheme } from '@mui/material/styles';
+import type { PaletteMode } from '@mui/material';
 
 /**
  * Returns a MUI theme configured for the given mode ('light' | 'dark').
@@ -9,11 +10,11 @@ export default function getTheme(mode: 'light' | 'dark') {
   const paletteMode = mode === 'dark' ? 'dark' : 'light';
   const isDark = paletteMode === 'dark';
 
-  const palette = {
-    mode: paletteMode,
-    primary: {
-      main: '#5E35B1',
-    },
+    const palette = {
+      mode: paletteMode as PaletteMode,
+      primary: {
+        main: '#5E35B1',
+      },
     secondary: {
       main: '#5E35B1',
     },
