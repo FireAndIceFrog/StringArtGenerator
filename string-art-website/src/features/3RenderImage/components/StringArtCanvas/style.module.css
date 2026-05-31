@@ -3,6 +3,7 @@
     border-radius: 8px;
     overflow: hidden;
     background: white;
+    color: #333;
 }
 
 .canvas-header {

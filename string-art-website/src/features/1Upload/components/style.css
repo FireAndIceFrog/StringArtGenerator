@@ -67,3 +67,29 @@
     background: #ccc;
     cursor: not-allowed;
 }
+
+@media (prefers-color-scheme: dark) {
+    .image-uploader {
+        border-color: #555;
+        background: #2a2a2a;
+        color: rgba(255, 255, 255, 0.87);
+    }
+
+    .image-uploader:hover:not(.disabled) {
+        border-color: #5E35B1;
+        background: #332a4a;
+    }
+
+    .image-uploader.drag-over {
+        border-color: #5E35B1;
+        background: #3d2e5e;
+    }
+
+    .image-uploader.disabled {
+        background: #1f1f1f;
+    }
+
+    .upload-text {
+        color: rgba(255, 255, 255, 0.7);
+    }
+}
