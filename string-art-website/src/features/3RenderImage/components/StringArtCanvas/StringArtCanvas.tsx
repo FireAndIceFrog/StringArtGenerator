@@ -17,6 +17,8 @@ export const StringArtCanvas = forwardRef<HTMLCanvasElement, StringArtCanvasProp
   );
   const canvasInternalRef = useRef<HTMLCanvasElement>(null);
   const [showOriginal, setShowOriginal] = useState(false);
+  const hasDrawableStringArt = currentPath.length > 1;
+  const shouldShowOriginal = !!imageUrl && (showOriginal || !hasDrawableStringArt);
 
   useImperativeHandle(ref, () => canvasInternalRef.current as HTMLCanvasElement);
 
@@ -29,11 +31,11 @@ export const StringArtCanvas = forwardRef<HTMLCanvasElement, StringArtCanvasProp
 
     // Always clear the canvas at the start of a render
     ctx.fillStyle = 'white';
-    ctx.clearRect(0, 0, width, height);
+    ctx.fillRect(0, 0, width, height);
 
     let isCancelled = false;
 
-    if (showOriginal && imageUrl) {
+    if (shouldShowOriginal) {
       const img = new Image();
       img.onload = () => {
         if (isCancelled) return;
@@ -86,7 +88,7 @@ export const StringArtCanvas = forwardRef<HTMLCanvasElement, StringArtCanvasProp
     return () => {
       isCancelled = true;
     };
-  }, [width, height, nailCoords, currentPath, showOriginal, imageUrl]);
+  }, [width, height, nailCoords, currentPath, shouldShowOriginal, imageUrl]);
 
   return (
     <div className={style['string-art-canvas-container']}>
@@ -96,9 +98,9 @@ export const StringArtCanvas = forwardRef<HTMLCanvasElement, StringArtCanvasProp
           <button
             onClick={() => setShowOriginal(!showOriginal)}
             className={style['toggle-button']}
-            disabled={!imageUrl}
+            disabled={!imageUrl || !hasDrawableStringArt}
           >
-            {showOriginal ? 'Show String Art' : 'Show Original'}
+            {hasDrawableStringArt && shouldShowOriginal ? 'Show String Art' : 'Show Original'}
           </button>
         </div>
       </div>
