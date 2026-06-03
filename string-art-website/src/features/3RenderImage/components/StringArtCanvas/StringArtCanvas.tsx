@@ -26,12 +26,22 @@ export const StringArtCanvas = forwardRef<HTMLCanvasElement, StringArtCanvasProp
     const canvas = canvasInternalRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    const resetCanvas = () => {
+      const context = canvas.getContext('2d');
+      if (!context) return null;
 
-    // Always clear the canvas at the start of a render
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, width, height);
+      context.setTransform(1, 0, 0, 1, 0, 0);
+      context.globalAlpha = 1;
+      context.globalCompositeOperation = 'source-over';
+      context.clearRect(0, 0, width, height);
+      context.fillStyle = 'white';
+      context.fillRect(0, 0, width, height);
+
+      return context;
+    };
+
+    const ctx = resetCanvas();
+    if (!ctx) return;
 
     let isCancelled = false;
 
@@ -40,9 +50,8 @@ export const StringArtCanvas = forwardRef<HTMLCanvasElement, StringArtCanvasProp
       img.onload = () => {
         if (isCancelled) return;
 
-        // Clear canvas again right before drawing to prevent race conditions
-        ctx.fillStyle = 'white';
-        ctx.fillRect(0, 0, width, height);
+        const resetContext = resetCanvas();
+        if (!resetContext) return;
 
         const scale = Math.min(width / img.width, height / img.height);
         const scaledWidth = img.width * scale;
@@ -50,7 +59,7 @@ export const StringArtCanvas = forwardRef<HTMLCanvasElement, StringArtCanvasProp
         const x = (width - scaledWidth) / 2;
         const y = (height - scaledHeight) / 2;
         
-        ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
+        resetContext.drawImage(img, x, y, scaledWidth, scaledHeight);
       };
       img.src = imageUrl;
     } else {
