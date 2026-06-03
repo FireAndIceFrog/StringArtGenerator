@@ -26,22 +26,19 @@ export const StringArtCanvas = forwardRef<HTMLCanvasElement, StringArtCanvasProp
     const canvas = canvasInternalRef.current;
     if (!canvas) return;
 
-    const resetCanvas = () => {
-      const context = canvas.getContext('2d');
-      if (!context) return null;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
+    const resetCanvas = (context: CanvasRenderingContext2D) => {
       context.setTransform(1, 0, 0, 1, 0, 0);
       context.globalAlpha = 1;
       context.globalCompositeOperation = 'source-over';
       context.clearRect(0, 0, width, height);
       context.fillStyle = 'white';
       context.fillRect(0, 0, width, height);
-
-      return context;
     };
 
-    const ctx = resetCanvas();
-    if (!ctx) return;
+    resetCanvas(ctx);
 
     let isCancelled = false;
 
@@ -50,8 +47,7 @@ export const StringArtCanvas = forwardRef<HTMLCanvasElement, StringArtCanvasProp
       img.onload = () => {
         if (isCancelled) return;
 
-        const resetContext = resetCanvas();
-        if (!resetContext) return;
+        resetCanvas(ctx);
 
         const scale = Math.min(width / img.width, height / img.height);
         const scaledWidth = img.width * scale;
@@ -59,7 +55,7 @@ export const StringArtCanvas = forwardRef<HTMLCanvasElement, StringArtCanvasProp
         const x = (width - scaledWidth) / 2;
         const y = (height - scaledHeight) / 2;
         
-        resetContext.drawImage(img, x, y, scaledWidth, scaledHeight);
+        ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
       };
       img.src = imageUrl;
     } else {
