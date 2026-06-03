@@ -100,7 +100,7 @@ export const StringArtCanvas = forwardRef<HTMLCanvasElement, StringArtCanvasProp
             className={style['toggle-button']}
             disabled={!imageUrl || !hasDrawableStringArt}
           >
-            {shouldShowOriginal ? 'Show String Art' : 'Show Original'}
+            {hasDrawableStringArt && shouldShowOriginal ? 'Show String Art' : 'Show Original'}
           </button>
         </div>
       </div>
