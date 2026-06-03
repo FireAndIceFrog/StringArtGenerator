@@ -29,9 +29,16 @@ export const StringArtCanvas = forwardRef<HTMLCanvasElement, StringArtCanvasProp
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Always clear the canvas at the start of a render
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, width, height);
+    const resetCanvas = (context: CanvasRenderingContext2D) => {
+      context.setTransform(1, 0, 0, 1, 0, 0);
+      context.globalAlpha = 1;
+      context.globalCompositeOperation = 'source-over';
+      context.clearRect(0, 0, width, height);
+      context.fillStyle = 'white';
+      context.fillRect(0, 0, width, height);
+    };
+
+    resetCanvas(ctx);
 
     let isCancelled = false;
 
@@ -40,9 +47,7 @@ export const StringArtCanvas = forwardRef<HTMLCanvasElement, StringArtCanvasProp
       img.onload = () => {
         if (isCancelled) return;
 
-        // Clear canvas again right before drawing to prevent race conditions
-        ctx.fillStyle = 'white';
-        ctx.fillRect(0, 0, width, height);
+        resetCanvas(ctx);
 
         const scale = Math.min(width / img.width, height / img.height);
         const scaledWidth = img.width * scale;
